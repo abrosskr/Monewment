@@ -1,0 +1,19 @@
+# --- Web Framework ---
+fastapi
+uvicorn[standard]
+
+# --- Environment & Settings ---
+pydantic
+pydantic-settings
+
+# --- Database (Async) ---
+sqlalchemy
+asyncpg
+
+# --- Logging & Monitoring ---
+python-json-logger
+
+# --- Vendors Heritage (Automation & Dev Tools) ---
+pytest
+black
+requests
