@@ -30,6 +30,9 @@ jobs:
         # pytest (추후 활성화)
 
     - name: 📝 Auto-Generate Documents
+      # [최적화] GitHub Secret에 등록된 API 키를 파이썬 스크립트에 연결합니다.
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         python scripts/generate_docs.py
 
@@ -39,4 +42,5 @@ jobs:
         git config --global user.name 'Monewment-Bot'
         git config --global user.email 'bot@monewment.ai'
         git add docs/STRUCTURE.md
+        # 변경사항이 있을 때만 커밋을 진행합니다.
         git diff --quiet && git diff --staged --quiet || (git commit -m "📝 Auto-update project structure docs" && git push)
