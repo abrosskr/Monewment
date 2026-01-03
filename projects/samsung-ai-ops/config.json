@@ -1,0 +1,9 @@
+{
+    "organization_id": 99,
+    "owner_admin_id": "admin-lee",
+    "created_at": "2026-01-03 23:28:04.253190",
+    "installed_features": [
+        "logs",
+        "mcp-bot"
+    ]
+}

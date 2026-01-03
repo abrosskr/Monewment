@@ -1,29 +1,24 @@
-# src/database.py
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from src.config import settings  # 경로 단순화됨
+﻿from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from src.config import settings
 
-engine = create_async_engine(
-    settings.SQLALCHEMY_DATABASE_URI,
+# 1. DB URL 가져오기 (비동기 드라이버가 있다면 동기용으로 자동 변환)
+db_url = getattr(settings, "DATABASE_URL", "sqlite:///./monewment.db")
+if "sqlite+aiosqlite" in db_url:
+    db_url = db_url.replace("sqlite+aiosqlite", "sqlite")
+
+# 2. 동기식 엔진 생성 (Standard)
+engine = create_engine(
+    db_url,
+    connect_args={"check_same_thread": False} if "sqlite" in db_url else {},
     echo=False,
-    future=True,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    future=True
 )
 
-AsyncSessionLocal = async_sessionmaker(
+# 3. 세션 팩토리 (Sync Session)
+SessionLocal = sessionmaker(
     bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
     autocommit=False,
     autoflush=False,
 )
-
-async def get_db():
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
