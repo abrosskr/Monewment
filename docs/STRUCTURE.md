@@ -1,32 +1,43 @@
 # 🏗️ Monewment & Vendors 통합 구조 및 설계 가이드
-> **Last Updated:** 2026-01-03 22:21:10
+> **Last Updated:** 2026-01-03 13:30:03
 
 ## 1. 프로젝트 디렉토리 트리
 ```text
 ├── 📂 Monewment/
-│   ├── 📄 docker-compose.yml
-│   ├── 📄 gateway_launcher.py
+│   ├── 📄 test_api.ps1
 │   ├── 📄 requirements.txt
-│   ├── 📄 start_monewment.ps1
-│   └── 📄 test_api.ps1
+│   ├── 📄 gateway_launcher.py
+│   ├── 📄 docker-compose.yml
+│   └── 📄 start_monewment.ps1
+│   ├── 📂 projects/
+│   │   ├── 📂 test-project-final/
+│   │   │   ├── 📄 main.log
+│   │   │   └── 📄 main.py
+│   ├── 📂 scripts/
+│   │   ├── 📄 mcp_server.py
+│   │   ├── 📄 connect_k8s.ps1
+│   │   ├── 📄 generate_docs.py
+│   │   ├── 📄 agent_server.py
+│   │   ├── 📄 test_env.py
+│   │   ├── 📄 ai_agent.py
+│   │   └── 📄 check_models.py
 │   ├── 📂 .github/
 │   │   ├── 📂 workflows/
 │   │   │   └── 📄 ci.yml
 │   ├── 📂 docs/
-│   │   └── 📄 STRUCTURE.md
+│   │   ├── 📄 STRUCTURE.md
 │   ├── 📂 gui/
-│   │   ├── 📄 eslint.config.mjs
-│   │   ├── 📄 next-env.d.ts
+│   │   ├── 📄 postcss.config.mjs
 │   │   ├── 📄 next.config.ts
 │   │   ├── 📄 package-lock.json
-│   │   ├── 📄 package.json
-│   │   ├── 📄 postcss.config.mjs
 │   │   ├── 📄 README.md
+│   │   ├── 📄 package.json
+│   │   ├── 📄 eslint.config.mjs
 │   │   └── 📄 tsconfig.json
 │   │   ├── 📂 app/
-│   │   │   ├── 📄 favicon.ico
 │   │   │   ├── 📄 globals.css
 │   │   │   ├── 📄 layout.tsx
+│   │   │   ├── 📄 favicon.ico
 │   │   │   └── 📄 page.tsx
 │   │   │   ├── 📂 dashboard/
 │   │   │   │   └── 📄 page.tsx
@@ -37,38 +48,24 @@
 │   │   │   │   └── 📄 page.tsx
 │   │   ├── 📂 public/
 │   │   │   ├── 📄 file.svg
-│   │   │   ├── 📄 globe.svg
 │   │   │   ├── 📄 next.svg
-│   │   │   ├── 📄 vercel.svg
-│   │   │   └── 📄 window.svg
+│   │   │   ├── 📄 globe.svg
+│   │   │   ├── 📄 window.svg
+│   │   │   └── 📄 vercel.svg
 │   ├── 📂 monewment/
 │   │   ├── 📂 src/
 │   │   │   └── 📄 models.py
 │   │   │   ├── 📂 routers/
 │   │   │   │   └── 📄 auth.py
-│   ├── 📂 projects/
-│   │   ├── 📂 test-project-final/
-│   │   │   ├── 📄 main.log
-│   │   │   └── 📄 main.py
-│   ├── 📂 scripts/
-│   │   ├── 📄 agent_server.py
-│   │   ├── 📄 ai_agent.py
-│   │   ├── 📄 check_models.py
-│   │   ├── 📄 connect_k8s.ps1
-│   │   ├── 📄 generate_docs.py
-│   │   ├── 📄 mcp_server.py
-│   │   └── 📄 test_env.py
 │   ├── 📂 src/
-│   │   ├── 📄 config.py
-│   │   ├── 📄 database.py
 │   │   ├── 📄 logger.py
+│   │   ├── 📄 database.py
 │   │   ├── 📄 main.py
-│   │   ├── 📄 models.py
-│   │   └── 📄 schemas.py
+│   │   ├── 📄 schemas.py
+│   │   ├── 📄 config.py
+│   │   └── 📄 models.py
 │   │   ├── 📂 routers/
 │   │   │   └── 📄 tools.py
-│   ├── 📂 templates/
-│   │   ├── 📂 standard/
 ```
 
 > ❌ AI 서버와 통신 중 오류가 발생했습니다.
