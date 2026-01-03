@@ -1,72 +1,107 @@
-# scripts/generate_docs.py
 import os
-import requests # [추가] AI 분석 통신용
+import requests
 import json
 from datetime import datetime
 
-def generate_tree(startpath, output_file):
-    """
-    해선님 원본 로직 100% 유지: 프로젝트 폴더 구조를 스캔하여 Markdown 트리 형태로 저장합니다.
-    """
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write("# 🏗️ Project Structure (Monewment 자율 생성 문서)\n\n")
-        f.write("```text\n")
-        
-        for root, dirs, files in os.walk(startpath):
-            level = root.replace(startpath, '').count(os.sep)
-            indent = '│   ' * (level)
-            
-            if '.git' in root or '__pycache__' in root or '.venv' in root or 'node_modules' in root:
-                continue
-                
-            subindent = '├── '
-            f.write(f'{indent}{subindent}{os.path.basename(root)}/\n')
-            
-            for i, file in enumerate(files):
-                if file.startswith('.') or file.endswith('.pyc'):
-                    continue
-                if i == len(files) - 1:
-                    sub_subindent = '└── '
-                else:
-                    sub_subindent = '├── '
-                f.write(f'{indent}│   {sub_subindent}{file}\n')
-                
-        f.write("```\n")
+# [최적화] 필터링할 폴더 목록을 하나로 통합하여 관리합니다.
+EXCLUDE_DIRS = {'.git', '__pycache__', '.venv', 'node_modules', '.next', '.vscode', 'dist', 'build'}
+TARGET_EXTS = {'.py', '.tsx', '.ts', '.yml', '.ps1', '.md'}
 
-# [최적화 추가] 프로젝트의 설계 의도와 히스토리를 분석하는 AI 기능입니다.
-def analyze_intent_with_ai():
-    api_key = os.getenv("GEMINI_API_KEY")
+def get_api_key():
+    """시스템 환경변수나 .env 파일에서 Gemini API 키를 직접 찾아옵니다."""
+    # 1. 시스템 환경변수 확인
+    key = os.getenv("GEMINI_API_KEY")
+    if key: return key
+    
+    # 2. 로컬 .env 파일 직접 탐색 (터미널 미인식 대비)
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env_path = os.path.join(root_dir, ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("GEMINI_API_KEY="):
+                    return line.split("=")[1].strip().replace("'", "").replace('"', "")
+    return None
+
+def generate_tree(startpath):
+    """프로젝트 구조를 스캔하여 텍스트 트리로 반환합니다."""
+    tree_text = ""
+    for root, dirs, files in os.walk(startpath):
+        # 불필요한 폴더는 스캔에서 제외
+        dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+        
+        level = root.replace(startpath, '').count(os.sep)
+        indent = '│   ' * level
+        tree_text += f"{indent}├── 📂 {os.path.basename(root)}/\n"
+        
+        for i, file in enumerate(files):
+            if file.startswith('.') or file.endswith('.pyc'): continue
+            sub_indent = '└── ' if i == len(files) - 1 else '├── '
+            tree_text += f"{indent}│   {sub_indent}📄 {file}\n"
+    return tree_text
+
+def get_code_context(startpath):
+    """주요 파일의 상단 내용을 수집하여 AI에게 설계 의도를 전달합니다."""
+    context = ""
+    for root, dirs, files in os.walk(startpath):
+        dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+        for file in files:
+            if any(file.endswith(ext) for ext in TARGET_EXTS):
+                # STRUCTURE.md 자체는 분석에서 제외
+                if file == "STRUCTURE.md": continue
+                
+                full_path = os.path.join(root, file)
+                try:
+                    with open(full_path, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()[:20] # 상단 20줄 수집
+                        context += f"\n[File: {file}]\n" + "".join(lines)
+                except: continue
+    return context[:6000] # API 토큰 제한을 고려한 최적화
+
+def analyze_project(tree, context):
+    """Gemini API를 호출하여 아키텍처 가이드를 생성합니다."""
+    api_key = get_api_key()
     if not api_key:
-        return "\n> ⚠️ Gemini API 키가 설정되지 않아 AI 분석을 건너뜁니다."
+        return "\n> ⚠️ API 키를 찾을 수 없어 기술 분석을 생성하지 못했습니다."
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    prompt = f"""당신은 전문 소프트웨어 아키텍트입니다. 아래 프로젝트 구조와 코드 내용을 바탕으로 
+    이 시스템의 '전체 설계 의도', '모듈 간 상호작용', '기술적 특이사항'을 분석하여 Markdown 형식으로 기술해 주세요.
     
-    # AI에게 줄 컨텍스트입니다.
-    prompt = "현재 프로젝트의 파일 구조와 코드를 바탕으로 이 프로젝트의 '설계 의도'와 '주요 기능'을 상세히 분석하여 Markdown 형식으로 요약해줘."
+    [구조 트리]
+    {tree}
+    
+    [핵심 코드 맥락]
+    {context}
+    """
     
     try:
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        response = requests.post(url, json=payload, timeout=10)
-        if response.status_code == 200:
-            return f"\n## 🧠 AI 프로젝트 분석 보고서\n\n{response.json()['candidates'][0]['content']['parts'][0]['text']}"
-    except:
-        pass
-    return "\n> ❌ AI 분석 중 오류가 발생했습니다."
+        res = requests.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=20)
+        if res.status_code == 200:
+            return f"\n## 🧠 AI 프로젝트 지능형 분석 보고서\n\n{res.json()['candidates'][0]['content']['parts'][0]['text']}"
+    except: pass
+    return "\n> ❌ AI 서버와 통신 중 오류가 발생했습니다."
 
 if __name__ == "__main__":
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     output_path = os.path.join(root_dir, "docs", "STRUCTURE.md")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    print(f"🔍 Monewment 프로젝트 분석 중: {root_dir}")
     
-    os.makedirs(os.path.join(root_dir, "docs"), exist_ok=True)
-    
-    print(f"🔍 Scanning project: {root_dir}")
-    # 1. 원본 트리 생성
-    generate_tree(root_dir, output_path)
-    
-    # 2. AI 분석 내용 추가
-    analysis_result = analyze_intent_with_ai()
-    with open(output_path, 'a', encoding='utf-8') as f:
-        f.write(analysis_result)
-        f.write(f"\n\n--- \n> Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | By Monewment Auto-Doc Script\n")
-        
-    print(f"✅ Documentation generated at: {output_path}")
+    # 분석 데이터 수집
+    tree = generate_tree(root_dir)
+    context = get_code_context(root_dir)
+    analysis = analyze_project(tree, context)
+
+    # 문서 작성
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write("# 🏗️ Monewment & Vendors 통합 구조 및 설계 가이드\n")
+        f.write(f"> **Last Updated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        f.write("## 1. 프로젝트 디렉토리 트리\n```text\n")
+        f.write(tree)
+        f.write("```\n")
+        f.write(analysis)
+        f.write("\n\n---\n> Generated by Monewment Auto-Doc System v3.0")
+
+    print(f"✅ 문서 최적화 생성 완료: {output_path}")
