@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# [최적화 추가] GitHub Actions가 파일을 쓸 수 있도록 명시적으로 권한을 부여합니다.
+permissions:
+  contents: write
+
 jobs:
   build-and-doc:
     runs-on: ubuntu-latest
@@ -22,25 +26,23 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install requests # AI 연동을 위해 필수
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: 🔍 Run Tests (준비 중)
       run: |
         echo "테스트 코드가 아직 없습니다. 스킵합니다."
-        # pytest (추후 활성화)
 
     - name: 📝 Auto-Generate Documents
-      # [최적화] GitHub Secret에 등록된 API 키를 파이썬 스크립트에 연결합니다.
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         python scripts/generate_docs.py
 
     - name: Commit Docs changes
-      # 문서가 변경되었으면 자동으로 커밋해서 푸시함 (봇이 수행)
+      # 변경사항이 있을 때만 커밋을 진행합니다. (해선님 원본 유지)
       run: |
         git config --global user.name 'Monewment-Bot'
         git config --global user.email 'bot@monewment.ai'
         git add docs/STRUCTURE.md
-        # 변경사항이 있을 때만 커밋을 진행합니다.
         git diff --quiet && git diff --staged --quiet || (git commit -m "📝 Auto-update project structure docs" && git push)
