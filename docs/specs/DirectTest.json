@@ -1,0 +1,8 @@
+﻿{
+  "type": "container",
+  "style": { "className": "bg-blue-900 p-10 text-white rounded-xl" },
+  "children": [
+    { "type": "text", "props": { "type": "title", "content": "BOM Fix Success!" } },
+    { "type": "button", "props": { "label": "Perfect", "variant": "primary" } }
+  ]
+}

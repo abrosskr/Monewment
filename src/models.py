@@ -31,7 +31,7 @@ class Organization(Base):
     
     users = relationship("User", back_populates="organization")
     rooms = relationship("Room", back_populates="organization")
-    projects = relationship("Project", back_populates="organization") # [신규] 프로젝트 목록
+    projects = relationship("Project", back_populates="organization")
 
 class User(Base):
     """
@@ -42,10 +42,13 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.MEMBER) # 계급장
+    role = Column(Enum(UserRole), default=UserRole.MEMBER) # 시스템 전체 계급장
     
     org_id = Column(Integer, ForeignKey("organizations.id"))
     organization = relationship("Organization", back_populates="users")
+    
+    # [신규] 내가 소속된 프로젝트 멤버십 목록
+    memberships = relationship("ProjectMember", back_populates="user")
 
 class Project(Base):
     """
@@ -62,6 +65,32 @@ class Project(Base):
     
     # 설치된 기능 목록 (예: ["logs", "auto-doc", "mcp-bot"])
     installed_features = Column(JSON, default=["logs"])
+
+    # [신규] 프로젝트에 소속된 팀원 목록
+    members = relationship("ProjectMember", back_populates="project")
+
+class ProjectMember(Base):
+    """
+    [신규 추가] 프로젝트 멤버 (매핑 테이블)
+    - 어떤 유저가 어떤 프로젝트에서 무슨 권한을 갖는지 정의합니다.
+    """
+    __tablename__ = "project_members"
+    id = Column(Integer, primary_key=True, index=True)
+    
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    
+    # 프로젝트 내 역할 (ADMIN: 관리자, MEMBER: 일반, VIEWER: 읽기전용)
+    role = Column(String, default="MEMBER")
+    
+    # 세부 허용 기능 (예: {"can_delete_logs": true})
+    allowed_features = Column(JSON, default={})
+    
+    joined_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    project = relationship("Project", back_populates="members")
+    user = relationship("User", back_populates="memberships")
 
 class PolicyPreset(Base):
     __tablename__ = "policy_presets"

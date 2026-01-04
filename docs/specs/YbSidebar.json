@@ -1,0 +1,28 @@
+﻿{
+  "type": "container",
+  "style": { 
+    "className": "w-[260px] h-screen bg-[#1A1A1A] border-r border-[#262626] flex flex-col fixed left-0 top-0 z-50 p-6" 
+  },
+  "children": [
+    {
+      "type": "button",
+      "props": { 
+        "label": "+ NEW PROJECT", 
+        "variant": "primary" 
+      },
+      "style": {
+        "className": "w-full h-14 text-lg font-bold shadow-lg flex items-center justify-center mb-4"
+      }
+    },
+    {
+      "type": "container",
+      "style": { "className": "flex-1 border border-dashed border-[#333] rounded-lg flex items-center justify-center" },
+      "children": [
+        { 
+          "type": "text", 
+          "props": { "content": "Empty Space" } 
+        }
+      ]
+    }
+  ]
+}

@@ -16,8 +16,9 @@ from src.config import settings
 from src.database import engine, SessionLocal
 from src.models import Base, User, Organization, Project
 from src.logger import setup_logger
-from src.routers import tools
-from src.collector import collector # [신규] 시스템 정보 수집기 장착
+# [수정] ui_factory 라우터 추가
+from src.routers import tools, ui_factory 
+from src.collector import collector
 
 logger = setup_logger()
 running_processes = {}
@@ -85,7 +86,7 @@ async def lifespan(app: FastAPI):
         proc.terminate()
     logger.info("🛑 Shutting down...")
 
-app = FastAPI(title="Monewment Platform", version="4.7-Collector", lifespan=lifespan)
+app = FastAPI(title="Monewment Platform", version="4.8-UIFactory", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -95,29 +96,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# [라우터 등록]
 app.include_router(tools.router, prefix=settings.API_V1_STR)
+# [신규] UI Factory (자동 코딩 머신) API 등록
+app.include_router(ui_factory.router)
 
 @app.get("/")
 def read_root():
-    return {"system": "Monewment Cluster", "status": "active", "mode": "B2B SaaS"}
+    """시스템 헬스 체크 및 현재 가동 모드를 확인합니다."""
+    return {"system": "Monewment Cluster", "status": "active", "mode": "B2B SaaS with UI Factory"}
 
 # =========================================================
-# [System Collector APIs] 시스템 정보 자동 수집 (신규 추가)
+# [System Collector APIs] 시스템 정보 자동 수집
 # =========================================================
 @app.get("/api/admin/schema")
 def get_real_db_schema():
-    """[최적화] DB Inspector를 통해 실제 테이블 구조 반환"""
-    # 기존 정규식 파싱 로직을 제거하고, 실제 DB 메타데이터를 조회합니다.
+    """[최적화] DB Inspector를 통해 실제 테이블 구조를 반환합니다."""
     return {"schema": collector.collect_db_schema()}
 
 @app.get("/api/admin/endpoints")
 def get_real_api_endpoints():
-    """[신규] FastAPI 라우트 실시간 추출 반환"""
+    """[신규] FastAPI 라우트 정보를 실시간으로 추출하여 반환합니다."""
     return {"endpoints": collector.collect_api_endpoints()}
 
 @app.get("/api/projects/{project_name}/structure")
 def get_project_tree(project_name: str):
-    """[신규] 프로젝트 폴더 구조 트리 반환"""
+    """[신규] 특정 프로젝트 폴더의 실시간 구조 트리를 반환합니다."""
     return {"structure": collector.collect_project_structure(project_name)}
 
 # =========================================================
@@ -125,6 +129,7 @@ def get_project_tree(project_name: str):
 # =========================================================
 @app.post("/api/auth/signup")
 def signup(req: SignupRequest, db: Session = Depends(get_db)):
+    """새로운 사용자를 등록하고 OWNER 권한을 부여합니다."""
     existing_user = db.query(User).filter(User.email == req.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다.")
@@ -137,6 +142,7 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
 
 @app.post("/api/auth/login")
 def login(req: LoginRequest, db: Session = Depends(get_db)):
+    """이메일과 비밀번호를 검증하고 액세스 권한을 부여합니다."""
     user = db.query(User).filter(User.email == req.email, User.hashed_password == req.password).first()
     if not user:
         raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 잘못되었습니다.")
@@ -147,6 +153,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 # =========================================================
 @app.post("/api/projects/create")
 def create_project_saas(req: CreateProjectRequest, db: Session = Depends(get_db)):
+    """새로운 프로젝트 엔진을 개설하고 폴더 구조 및 템플릿을 배포합니다."""
     base_path = "D:\\projects\\Monewment"
     target_path = os.path.join(base_path, "projects", req.project_name)
     template_path = os.path.join(base_path, "templates", "standard")
@@ -199,6 +206,7 @@ def create_project_saas(req: CreateProjectRequest, db: Session = Depends(get_db)
 # =========================================================
 @app.get("/api/services/list")
 def get_services_list():
+    """플랫폼에서 제공하는 설치 가능 및 설치된 기능 목록을 조회합니다."""
     return {
         "installed": [
             {"id": "logs", "name": "실시간 로그 스트리밍", "type": "basic", "status": "active"}
@@ -206,6 +214,7 @@ def get_services_list():
         "available": [
             {"id": "auto-doc", "name": "AI 자동 문서화", "price": 0, "desc": "DB 구조 및 폴더 트리 자동 분석"},
             {"id": "mcp-bot", "name": "AI 코드 수정 봇", "price": 49000, "desc": "에러 발생 시 AI가 코드를 직접 수정"},
+            {"id": "ui-factory", "name": "UI 자동 생성 공장", "price": 59000, "desc": "명세서를 UI 코드로 자동 변환 (SaaS)"}, # [업데이트]
             {"id": "api-analyzer", "name": "API 트래픽 분석기", "price": 29000, "desc": "API 호출량 및 상태 시각화"}
         ]
     }
@@ -215,6 +224,7 @@ def get_services_list():
 # =========================================================
 @app.post("/api/services/keys")
 def update_api_key(req: ApiKeyUpdate):
+    """Gemini 또는 OpenAI의 API 키를 .env 파일에 안전하게 업데이트합니다."""
     env_path = "D:\\projects\\Monewment\\.env"
     target_key = "GEMINI_API_KEY" if req.service_name == "gemini" else "OPENAI_API_KEY"
     
@@ -248,6 +258,7 @@ def update_api_key(req: ApiKeyUpdate):
 # =========================================================
 @app.post("/api/chat")
 async def chat_with_agent(request: ChatRequest):
+    """실시간 로그를 컨텍스트로 사용하여 AI 에이전트와 대화하고 해결책을 구합니다."""
     env_path = "D:\\projects\\Monewment\\.env"
     api_key = None
     if os.path.exists(env_path):
@@ -282,6 +293,7 @@ async def chat_with_agent(request: ChatRequest):
 # =========================================================
 @app.get("/api/admin/env")
 async def get_env_raw():
+    """.env 파일의 원본 내용을 읽어옵니다."""
     env_path = "D:\\projects\\Monewment\\.env"
     if os.path.exists(env_path):
         with open(env_path, "r", encoding="utf-8") as f: return {"content": f.read()}
@@ -289,18 +301,21 @@ async def get_env_raw():
 
 @app.post("/api/admin/env")
 async def save_env_raw(req: EnvUpdateRequest):
+    """.env 파일의 내용을 직접 수정하고 저장합니다."""
     with open("D:\\projects\\Monewment\\.env", "w", encoding="utf-8") as f:
         f.write(req.content)
     return {"status": "success"}
 
 @app.get("/projects")
 async def list_projects():
+    """현재 가동 중인 모든 프로젝트 디렉토리 목록을 반환합니다."""
     projects_dir = "D:\\projects\\Monewment\\projects"
     if not os.path.exists(projects_dir): return {"projects": []}
     return {"projects": [f for f in os.listdir(projects_dir) if os.path.isdir(os.path.join(projects_dir, f))]}
 
 @app.get("/projects/{project_name}/logs")
 async def get_logs(project_name: str):
+    """지정된 프로젝트의 main.log 파일 내용을 읽어옵니다."""
     log_path = os.path.join("D:\\projects\\Monewment\\projects", project_name, "main.log")
     if os.path.exists(log_path):
         with open(log_path, "r", encoding="utf-8") as f: return {"logs": f.read()}
@@ -308,6 +323,7 @@ async def get_logs(project_name: str):
 
 @app.post("/projects/{project_name}/start")
 async def start_project(project_name: str):
+    """지정된 프로젝트의 엔진(main.py)을 독립 프로세스로 실행합니다."""
     if project_name in running_processes: return {"status": "info", "message": "Already running"}
     path = os.path.join("D:\\projects\\Monewment\\projects", project_name)
     running_processes[project_name] = subprocess.Popen(["python", "main.py"], cwd=path)
@@ -315,6 +331,7 @@ async def start_project(project_name: str):
 
 @app.post("/projects/{project_name}/stop")
 async def stop_project(project_name: str):
+    """지정된 프로젝트에서 실행 중인 엔진 프로세스를 강제 종료합니다."""
     if project_name in running_processes:
         running_processes.pop(project_name).terminate()
         return {"status": "success"}
@@ -322,6 +339,7 @@ async def stop_project(project_name: str):
 
 @app.post("/install")
 async def install_legacy(req: InstallRequest):
+    """[Legacy] 이전 방식의 프로젝트 설치 요청을 새로운 SaaS 로직으로 연결합니다."""
     return create_project_saas(CreateProjectRequest(
         user_id=1, project_name=req.project_name, organization_name="LegacyOrg"
     ), next(get_db()))

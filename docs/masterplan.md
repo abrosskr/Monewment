@@ -1,6 +1,6 @@
 # 🏗️ Monewment B2B SaaS Master Plan
 
-> **Version:** 1.1 (2026-01-04)
+> **Version:** 1.2 (2026-01-04)
 > **Status:** Active Development
 > **Goal:** 기업(ProjectClient)이 AI DevOps 엔진을 구독하고, 팀원(ProjectMember)을 초대하여 **권한별로 협업**하는 엔터프라이즈 멀티테넌트 플랫폼 구축
 
@@ -38,8 +38,9 @@
     * `[Team]` 탭에서 이메일로 동료 초대.
     * 초대된 동료에게 'Logs', 'MCP Bot' 등 **세부 권한(Feature Key)** 부여.
     * 관리자(Admin)와 일반 멤버(Member) 구분 표시.
-7.  **시스템 인텔리전스 (System Intelligence):**
-    * `[General]` 탭 하단에서 **실시간 DB 스키마** 및 **API 명세** 자동 수집/시각화 (Collector).
+7.  **시스템 인텔리전스 (System Intelligence) - [기능 강화 완료]:**
+    * `[General]` 탭 하단에서 **실시간 DB 스키마** 및 **API 명세** 자동 수집/시각화.
+    * **[New] CCTV 모듈(Watchdog):** 파일 변경 감지 시 `docs/auto_generated` 내 4대 핵심 문서(구조, 데이터, 통신, 설정) 자동 최신화.
     * `.env` 환경 변수 에디터 제공.
 
 ### 🚧 Phase 3: 운영 및 AI 제어 (개발 예정)
@@ -60,13 +61,26 @@
 | **Backend** | FastAPI | REST API, Auth(JWT), 파일 시스템 제어, 프로세스 관리 |
 | **Database** | SQLite (SQLAlchemy) | 사용자/프로젝트/팀원 정보 저장 (추후 PostgreSQL 마이그레이션 가능) |
 | **Module** | Python `multiprocessing` | 개별 프로젝트 엔진 독립 실행 및 제어 |
-| **Intel** | `src.collector` | 시스템 자가 진단 및 메타데이터 자동 수집기 |
+| **DevOps** | **Python `watchdog` & Custom Inspectors** | **[New]** 실시간 파일 감시, 프로젝트명 자동 인식, 문서 자동화(CCTV) |
+| **Intel** | `src.core.devtools` | **[New]** 시스템 자가 진단 및 메타데이터 자동 수집기 (Data, Network, Structure, Config) |
 
 ---
 
 ## 4. 심층 개발 로드맵 (Deep-Dive Checklist)
 
-현재 "설정(Configuration)" 단계까지 완료되었습니다. 이제 "실행(Operation)" 단계로 넘어갑니다.
+### ✅ Priority Zero: 개발 환경 자동화 (Infrastructure Completed)
+*개발 효율성 극대화 및 AI 협업을 위한 인프라 구축 완료.*
+
+- [x] **Z-1. 범용 프로젝트 실행기 (`start_project.ps1`)**
+    - [x] 폴더명 기반 프로젝트 이름 자동 감지 구현.
+    - [x] Docker, Backend, Frontend, CCTV 통합 실행 지원.
+- [x] **Z-2. 지능형 감시 시스템 (CCTV)**
+    - [x] `scripts/run_local_cctv.py` 경로 인식 문제 해결 및 이사 완료.
+    - [x] 4대 엔진(`inspectors`) 모듈화 및 `src/core/devtools` 통합.
+    - [x] 파일 변경 시 `docs/auto_generated/` 내 MD 파일 실시간 갱신 구현.
+- [x] **Z-3. 좀비 폴더 및 중복 파일 제거**
+    - [x] 구버전 스크립트(`inspector.py`, `start_monewment.ps1` 등) 삭제 및 최적화.
+    - [x] 잘못 생성된 중복 폴더(`monewment/src`, `projects/Monewment`) 제거 완료.
 
 ### 🚀 Priority A: 동적 라우팅 및 상세 페이지 (Urgent)
 *단일 프로젝트 하드코딩을 제거하고, 다중 프로젝트를 지원하는 구조로 전환.*
