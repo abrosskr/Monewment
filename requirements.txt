@@ -9,6 +9,7 @@ pydantic-settings
 # --- Database (Async) ---
 sqlalchemy
 asyncpg
+psycopg2-binary
 
 # --- Logging & Monitoring ---
 python-json-logger
@@ -17,3 +18,4 @@ python-json-logger
 pytest
 black
 requests
+kubernetes

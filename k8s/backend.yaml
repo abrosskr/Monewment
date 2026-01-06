@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          # Important: Using the image we built locally with docker-compose
+          image: monewment-backend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: POSTGRES_SERVER
+              value: "main-db"
+            - name: POSTGRES_USER
+              value: "user"
+            - name: POSTGRES_PASSWORD
+              value: "monewment1234"
+            - name: POSTGRES_DB
+              value: "monewment"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: SECRET_KEY
+              value: "super-secret-key-for-dev"
+            # Using a dummy key for dev environment or loading from checking local K8s secrets (later)
+            - name: GEMINI_API_KEY
+              value: "dummy-key-for-k8s-dev"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: LoadBalancer 

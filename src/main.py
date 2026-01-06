@@ -14,11 +14,13 @@ from sqlalchemy.orm import Session
 # [모듈 임포트]
 from src.config import settings
 from src.database import engine, SessionLocal
-from src.models import Base, User, Organization, Project
+from src.models import Base, User, Organization, Project, VMInstance, VMFlavor, VMUsage, AIModel, Cluster
 from src.logger import setup_logger
 # [수정] ui_factory 라우터 추가
 from src.routers import tools, ui_factory 
 from src.collector import collector
+from src.core.security import hash_password, verify_password, create_access_token, get_current_user, validate_project_path
+from sqlalchemy import func
 
 logger = setup_logger()
 running_processes = {}
@@ -56,13 +58,30 @@ class InstallRequest(BaseModel):
 class EnvUpdateRequest(BaseModel):
     content: str
 
-# --- [DB 세션 관리] ---
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+class PricingUpdateRequest(BaseModel):
+    hourly_rate: float
+
+class ClusterCreateRequest(BaseModel):
+    name: str
+    region: str = "kr-seoul-1"
+    cpu_capacity: int = 100
+    ram_capacity_gb: int = 512
+    gpu_capacity: int = 8
+
+class OrgApproveRequest(BaseModel):
+    org_id: int
+    cluster_id: int
+    quota_cpu: int
+    quota_ram_gb: int
+    quota_gpu: int
+
+class ProjectExpandRequest(BaseModel):
+    org_id: int
+    project_name: str
+    # Top-Down 방식이므로 템플릿 선택 등 추가 가능
+
+# [DB 세션 관리] - Moved to dependencies.py
+from src.dependencies import get_db
 
 # [수정됨] 동기식 엔진에 맞게 테이블 생성 로직 변경
 @asynccontextmanager
@@ -101,6 +120,10 @@ app.include_router(tools.router, prefix=settings.API_V1_STR)
 # [신규] UI Factory (자동 코딩 머신) API 등록
 app.include_router(ui_factory.router)
 
+# [Phase 3] VM Management Router
+from src.api.v1.endpoints import vm
+app.include_router(vm.router, prefix="/api/vm", tags=["Virtual Machines"])
+
 @app.get("/")
 def read_root():
     """시스템 헬스 체크 및 현재 가동 모드를 확인합니다."""
@@ -124,6 +147,135 @@ def get_project_tree(project_name: str):
     """[신규] 특정 프로젝트 폴더의 실시간 구조 트리를 반환합니다."""
     return {"structure": collector.collect_project_structure(project_name)}
 
+# ---------------------------------------------------------
+# [Admin Dashboard APIs]
+# ---------------------------------------------------------
+@app.get("/api/admin/stats")
+async def get_admin_stats(db: Session = Depends(get_db)):
+    """관리자용 대시보드 통계 정보를 반환합니다."""
+    total_users = db.query(User).count()
+    total_projects = db.query(Project).count()
+    active_vms = db.query(VMInstance).filter(VMInstance.status == "RUNNING").count()
+    
+    # 총 매출 계산 (단순 합계)
+    total_revenue = db.query(func.sum(VMUsage.total_cost)).scalar() or 0
+    
+    return {
+        "users": total_users,
+        "projects": total_projects,
+        "active_vms": active_vms,
+        "revenue": float(total_revenue)
+    }
+
+@app.get("/api/admin/vms")
+async def get_all_vms(db: Session = Depends(get_db)):
+    """모든 프로젝트에서 실행 중인 VM 리스트를 반환합니다."""
+    vms = db.query(VMInstance).all()
+    result = []
+    for vm in vms:
+        result.append({
+            "id": vm.id,
+            "name": vm.name,
+            "status": vm.status,
+            "project_id": vm.project_id,
+            "flavor": vm.flavor_id,
+            "created_at": vm.created_at
+        })
+    return {"vms": result}
+
+@app.get("/api/admin/pricing/flavors")
+async def get_flavors(db: Session = Depends(get_db)):
+    """현재 등록된 VM 등급별 시간당 요금을 조회합니다."""
+    flavors = db.query(VMFlavor).all()
+    return {"flavors": [{"id": f.id, "name": f.name, "hourly_rate": float(f.hourly_rate)} for f in flavors]}
+
+@app.patch("/api/admin/pricing/flavors/{flavor_id}")
+async def update_flavor_rate(flavor_id: int, req: PricingUpdateRequest, db: Session = Depends(get_db)):
+    """특정 VM 등급의 시간당 요금을 실시간으로 업데이트합니다."""
+    flavor = db.query(VMFlavor).filter(VMFlavor.id == flavor_id).first()
+    if not flavor:
+        raise HTTPException(status_code=404, detail="Flavor not found")
+    
+    flavor.hourly_rate = req.hourly_rate
+    db.commit()
+    return {"status": "success", "new_rate": float(flavor.hourly_rate)}
+
+@app.get("/api/admin/hierarchy")
+async def get_system_hierarchy(db: Session = Depends(get_db)):
+    """[최상위 관리자] 시스템 전체 계층 구조(Cluster -> Org -> Project)를 조회합니다."""
+    clusters = db.query(Cluster).all()
+    result = []
+    for c in clusters:
+        orgs = []
+        for org in c.organizations:
+            projs = [{"id": p.id, "name": p.name, "status": p.status} for p in org.projects]
+            orgs.append({
+                "id": org.id,
+                "name": org.name,
+                "status": org.status,
+                "projects": projs,
+                "quota": {"cpu": org.quota_cpu, "ram": org.quota_ram_gb, "gpu": org.quota_gpu}
+            })
+        result.append({
+            "id": c.id,
+            "name": c.name,
+            "region": c.region,
+            "status": c.status,
+            "organizations": orgs
+        })
+    return {"hierarchy": result}
+
+@app.post("/api/admin/clusters")
+async def create_cluster(req: ClusterCreateRequest, db: Session = Depends(get_db)):
+    """[최상위 관리자] 새 클러스터를 시스템에 등록합니다."""
+    new_cluster = Cluster(
+        name=req.name, 
+        region=req.region, 
+        cpu_capacity=req.cpu_capacity,
+        ram_capacity_gb=req.ram_capacity_gb,
+        gpu_capacity=req.gpu_capacity
+    )
+    db.add(new_cluster)
+    db.commit()
+    return {"status": "success", "cluster_id": new_cluster.id}
+
+@app.post("/api/admin/organizations/approve")
+async def approve_organization(req: OrgApproveRequest, db: Session = Depends(get_db)):
+    """[최상위 관리자] 입점 신청한 Organization을 승인하고 자원을 할당합니다."""
+    org = db.query(Organization).filter(Organization.id == req.org_id).first()
+    if not org: raise HTTPException(status_code=404, detail="Org not found")
+    
+    org.cluster_id = req.cluster_id
+    org.quota_cpu = req.quota_cpu
+    org.quota_ram_gb = req.quota_ram_gb
+    org.quota_gpu = req.quota_gpu
+    org.status = "ACTIVE"
+    
+    db.commit()
+    return {"status": "success"}
+
+@app.post("/api/admin/projects/expand")
+async def expand_project_topdown(req: ProjectExpandRequest, db: Session = Depends(get_db)):
+    """[최상위 관리자] 특정 Organization 하위에 프로젝트를 Top-Down 방식으로 직접 배포합니다."""
+    # 1. 대상 Org 확인
+    org = db.query(Organization).filter(Organization.id == req.org_id).first()
+    if not org: raise HTTPException(status_code=404, detail="Organization not found")
+    
+    # 2. 프로젝트 생성 (보안 검증 포함)
+    target_path = validate_project_path(req.project_name)
+    if os.path.exists(target_path):
+        raise HTTPException(status_code=400, detail="이미 존재하는 프로젝트 폴더입니다.")
+        
+    # 물리 폴더 생성
+    os.makedirs(target_path, exist_ok=True)
+    
+    # DB 기록
+    new_project = Project(name=req.project_name, org_id=req.org_id, status="ACTIVE")
+    db.add(new_project)
+    db.commit()
+    
+    return {"status": "success", "project_id": new_project.id, "path": str(target_path)}
+
 # =========================================================
 # [Scenario 4] 회원가입 및 로그인 (Auth)
 # =========================================================
@@ -134,7 +286,8 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다.")
     
-    new_user = User(email=req.email, hashed_password=req.password, role="OWNER")
+    hashed = hash_password(req.password)
+    new_user = User(email=req.email, hashed_password=hashed, role="OWNER")
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -143,10 +296,29 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
 @app.post("/api/auth/login")
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     """이메일과 비밀번호를 검증하고 액세스 권한을 부여합니다."""
-    user = db.query(User).filter(User.email == req.email, User.hashed_password == req.password).first()
-    if not user:
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 잘못되었습니다.")
-    return {"status": "success", "user_id": user.id, "name": user.email.split("@")[0], "token": "access-granted"}
+    
+    # Generate JWT Token
+    access_token = create_access_token(data={"sub": user.email})
+    
+    return {
+        "status": "success", 
+        "user_id": user.id, 
+        "name": user.email.split("@")[0], 
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
+
+@app.get("/api/auth/me")
+def read_users_me(current_user: User = Depends(get_current_user)):
+    """현재 로그인된 사용자의 정보를 반환합니다 (JWT 검증)."""
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "role": current_user.role
+    }
 
 # =========================================================
 # [Scenario 5] 프로젝트(법인/팀) 생성 및 폴더 배포
@@ -154,9 +326,9 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 @app.post("/api/projects/create")
 def create_project_saas(req: CreateProjectRequest, db: Session = Depends(get_db)):
     """새로운 프로젝트 엔진을 개설하고 폴더 구조 및 템플릿을 배포합니다."""
-    base_path = "D:\\projects\\Monewment"
-    target_path = os.path.join(base_path, "projects", req.project_name)
-    template_path = os.path.join(base_path, "templates", "standard")
+    # [보안] Path Traversal 방어 적용
+    target_path = validate_project_path(req.project_name)
+    template_path = settings.TEMPLATES_DIR
     
     if os.path.exists(target_path):
         raise HTTPException(status_code=400, detail="이미 존재하는 프로젝트 폴더입니다.")
@@ -225,7 +397,7 @@ def get_services_list():
 @app.post("/api/services/keys")
 def update_api_key(req: ApiKeyUpdate):
     """Gemini 또는 OpenAI의 API 키를 .env 파일에 안전하게 업데이트합니다."""
-    env_path = "D:\\projects\\Monewment\\.env"
+    env_path = settings.ENV_FILE_PATH
     target_key = "GEMINI_API_KEY" if req.service_name == "gemini" else "OPENAI_API_KEY"
     
     try:
@@ -259,7 +431,7 @@ def update_api_key(req: ApiKeyUpdate):
 @app.post("/api/chat")
 async def chat_with_agent(request: ChatRequest):
     """실시간 로그를 컨텍스트로 사용하여 AI 에이전트와 대화하고 해결책을 구합니다."""
-    env_path = "D:\\projects\\Monewment\\.env"
+    env_path = settings.ENV_FILE_PATH
     api_key = None
     if os.path.exists(env_path):
         with open(env_path, "r", encoding="utf-8") as f:
@@ -271,7 +443,9 @@ async def chat_with_agent(request: ChatRequest):
     if not api_key:
         return {"response": "⚠️ API 키가 설정되지 않았습니다. [설정] 탭에서 키를 입력해주세요."}
 
-    log_path = os.path.join("D:\\projects\\Monewment\\projects", request.project_name, "main.log")
+    # [보안] Path Traversal 방어 적용
+    project_path = validate_project_path(request.project_name)
+    log_path = project_path / "main.log"
     context = "로그 없음"
     if os.path.exists(log_path):
         with open(log_path, "r", encoding="utf-8") as f:
@@ -294,7 +468,7 @@ async def chat_with_agent(request: ChatRequest):
 @app.get("/api/admin/env")
 async def get_env_raw():
     """.env 파일의 원본 내용을 읽어옵니다."""
-    env_path = "D:\\projects\\Monewment\\.env"
+    env_path = settings.ENV_FILE_PATH
     if os.path.exists(env_path):
         with open(env_path, "r", encoding="utf-8") as f: return {"content": f.read()}
     return {"content": ""}
@@ -302,21 +476,24 @@ async def get_env_raw():
 @app.post("/api/admin/env")
 async def save_env_raw(req: EnvUpdateRequest):
     """.env 파일의 내용을 직접 수정하고 저장합니다."""
-    with open("D:\\projects\\Monewment\\.env", "w", encoding="utf-8") as f:
+    with open(settings.ENV_FILE_PATH, "w", encoding="utf-8") as f:
         f.write(req.content)
     return {"status": "success"}
 
 @app.get("/projects")
 async def list_projects():
     """현재 가동 중인 모든 프로젝트 디렉토리 목록을 반환합니다."""
-    projects_dir = "D:\\projects\\Monewment\\projects"
+    projects_dir = settings.PROJECTS_DIR
     if not os.path.exists(projects_dir): return {"projects": []}
     return {"projects": [f for f in os.listdir(projects_dir) if os.path.isdir(os.path.join(projects_dir, f))]}
 
 @app.get("/projects/{project_name}/logs")
 async def get_logs(project_name: str):
     """지정된 프로젝트의 main.log 파일 내용을 읽어옵니다."""
-    log_path = os.path.join("D:\\projects\\Monewment\\projects", project_name, "main.log")
+    # [보안] Path Traversal 방어 적용
+    project_path = validate_project_path(project_name)
+    log_path = project_path / "main.log"
+    
     if os.path.exists(log_path):
         with open(log_path, "r", encoding="utf-8") as f: return {"logs": f.read()}
     return {"logs": ""}
@@ -325,8 +502,10 @@ async def get_logs(project_name: str):
 async def start_project(project_name: str):
     """지정된 프로젝트의 엔진(main.py)을 독립 프로세스로 실행합니다."""
     if project_name in running_processes: return {"status": "info", "message": "Already running"}
-    path = os.path.join("D:\\projects\\Monewment\\projects", project_name)
-    running_processes[project_name] = subprocess.Popen(["python", "main.py"], cwd=path)
+    
+    # [보안] Path Traversal 방어 적용
+    project_path = validate_project_path(project_name)
+    running_processes[project_name] = subprocess.Popen(["python", "main.py"], cwd=str(project_path))
     return {"status": "success"}
 
 @app.post("/projects/{project_name}/stop")

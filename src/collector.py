@@ -2,6 +2,8 @@
 from sqlalchemy import inspect as sqlalchemy_inspect
 from fastapi.routing import APIRoute
 from src.database import engine
+from src.config import settings
+from src.core.security import validate_project_path
 
 class SystemCollector:
     def __init__(self, app_instance=None):
@@ -61,8 +63,9 @@ class SystemCollector:
         [폴더 구조 트리 매핑]
         특정 프로젝트의 폴더 구조를 재귀적으로 스캔하여 JSON 트리로 반환합니다.
         """
-        root_dir = os.path.join("D:\\projects\\Monewment\\projects", project_name)
-        if not os.path.exists(root_dir): return {"error": "Project not found", "path": root_dir}
+        # [보안] Path Traversal 방어 적용
+        root_dir = validate_project_path(project_name)
+        if not os.path.exists(root_dir): return {"error": "Project not found", "path": str(root_dir)}
 
         def scan_dir(path):
             tree = {"name": os.path.basename(path), "type": "folder", "children": []}

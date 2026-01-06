@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guacamole-auth-file
+data:
+  user-mapping.xml: |
+    <user-mapping>
+        <authorize username="guacadmin" password="guacadmin">
+            <connection name="testvm">
+                <protocol>vnc</protocol>
+                <param name="hostname">testvm-vnc</param>
+                <param name="port">5900</param>
+                <!-- dorowu image uses password if set, or no password. Let's try without password first or set standard 'secret' config explicitly if needed. -->
+                <!-- The deployment sets VNC_PASSWORD=secret -->
+                <param name="password">secret</param>
+            </connection>
+        </authorize>
+        <authorize username="testuser" password="testpassword">
+            <connection name="testvm">
+                <protocol>vnc</protocol>
+                <param name="hostname">testvm-vnc</param>
+                <param name="port">5900</param>
+                <param name="password">secret</param>
+            </connection>
+        </authorize>
+    </user-mapping>

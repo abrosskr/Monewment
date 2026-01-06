@@ -1,0 +1,129 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: guacamole-auth
+type: Opaque
+stringData:
+  postgres-password: "guacamole_password"
+---
+# 1. Guacamole Database (Postgres)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guacamole-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: guacamole-db
+  template:
+    metadata:
+      labels:
+        app: guacamole-db
+    spec:
+      containers:
+        - name: guacamole-db
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_USER
+              value: "guacamole_user"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: guacamole-auth
+                  key: postgres-password
+            - name: POSTGRES_DB
+              value: "guacamole_db"
+          ports:
+            - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guacamole-db
+spec:
+  selector:
+    app: guacamole-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+# 2. Guacamole Proxy Daemon (guacd)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guacd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: guacd
+  template:
+    metadata:
+      labels:
+        app: guacd
+    spec:
+      containers:
+        - name: guacd
+          image: guacamole/guacd
+          ports:
+            - containerPort: 4822
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guacd
+spec:
+  selector:
+    app: guacd
+  ports:
+    - port: 4822
+      targetPort: 4822
+---
+# 3. Guacamole Client (Web Frontend)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guacamole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: guacamole
+  template:
+    metadata:
+      labels:
+        app: guacamole
+    spec:
+      containers:
+        - name: guacamole
+          image: guacamole/guacamole
+          env:
+            - name: GUACAMOLE_HOME
+              value: "/home/guacamole/.guacamole"
+            - name: GUACD_HOSTNAME
+              value: "guacd"
+            - name: GUACD_PORT
+              value: "4822"
+          volumeMounts:
+            - name: auth-file
+              mountPath: /home/guacamole/.guacamole/user-mapping.xml
+              subPath: user-mapping.xml
+          ports:
+            - containerPort: 8080
+      volumes:
+        - name: auth-file
+          configMap:
+            name: guacamole-auth-file
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guacamole
+spec:
+  selector:
+    app: guacamole
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: LoadBalancer

@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <body className="bg-[#141414] text-[#E5E5E5] font-sans antialiased overflow-hidden">
         <div className="flex h-screen w-screen">
 
