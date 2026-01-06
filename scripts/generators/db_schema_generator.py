@@ -7,15 +7,19 @@ import os
 import sys
 from datetime import datetime
 
-# collector.py 사용
+# collector.py 사용 (DB 연결 실패 시 graceful degradation)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.collector import collector
 
 def generate_db_schema_docs(root_dir, output_dir):
     """DB 스키마 문서 생성"""
     
-    # DB 스키마 수집
-    schema_info = collector.collect_db_schema()
+    # DB 스키마 수집 (연결 실패 시 빈 리스트 반환)
+    try:
+        from src.collector import collector
+        schema_info = collector.collect_db_schema()
+    except Exception as e:
+        print(f"⚠️ DB 연결 실패 (CI 환경에서는 정상): {str(e)}")
+        schema_info = []
     
     # Mermaid ERD 다이어그램 생성
     erd_diagram = generate_erd_diagram(schema_info)
