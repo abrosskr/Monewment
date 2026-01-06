@@ -48,6 +48,8 @@ jobs:
         git config --global user.name 'Monewment-Bot'
         git config --global user.email 'bot@monewment.ai'
         git add docs/auto_generated/
+        git add docs/deployment/
+        git add docs/user_guide/
         git add docs/STRUCTURE.md
         git diff --quiet && git diff --staged --quiet || \
           (git commit -m "📝 Auto-update documentation [skip ci]" && git push)
