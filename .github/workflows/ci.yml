@@ -81,4 +81,3 @@ jobs:
         else
           echo "No documentation changes to commit"
         fi
-```
