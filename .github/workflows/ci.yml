@@ -40,7 +40,7 @@ jobs:
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
-        python scripts/generate_docs.py
+        python scripts/generate_docs_v4.py
 
     - name: Commit and Push Docs
       # 변경사항이 있을 때만 커밋을 진행합니다. [skip ci]로 무한 루프 방지
