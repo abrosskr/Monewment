@@ -56,5 +56,29 @@ jobs:
         git add docs/deployment/
         git add docs/user_guide/
         git add docs/STRUCTURE.md
-        git diff --quiet && git diff --staged --quiet || \
-          (git commit -m "📝 Auto-update documentation [skip ci]" && git push)
+        
+        # 변경사항 확인
+        if ! git diff --quiet --staged; then
+          git commit -m "📝 Auto-update documentation [skip ci]"
+          
+          # Pull with rebase before push (충돌 방지)
+          git pull origin ${{ github.ref_name }} --rebase || true
+          
+          # Push with retry logic (안정성 향상)
+          for i in 1 2 3; do
+            echo "Push attempt $i/3..."
+            if git push origin ${{ github.ref_name }}; then
+              echo "✅ Successfully pushed!"
+              exit 0
+            fi
+            echo "⚠️ Push failed, retrying..."
+            git pull origin ${{ github.ref_name }} --rebase || true
+            sleep 2
+          done
+          
+          echo "❌ Push failed after 3 attempts"
+          exit 1
+        else
+          echo "No documentation changes to commit"
+        fi
+```
