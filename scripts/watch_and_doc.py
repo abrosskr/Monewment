@@ -79,7 +79,7 @@ class CodeChangeHandler(FileSystemEventHandler):
         
         try:
             result = subprocess.run(
-                ["python", "scripts/generate_docs.py"],
+                ["python", "scripts/generate_docs_v4.py"],
                 capture_output=True,
                 text=True,
                 timeout=60

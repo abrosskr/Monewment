@@ -7,7 +7,7 @@ def check_structure():
     print("🔍 [1/3] 폴더 구조 확인 중...")
     # [수정됨] 'app' -> 'src'로 변경 (우리가 결정한 Flat 구조 반영)
     required_dirs = ['src', 'scripts', '.github/workflows']
-    required_files = ['requirements.txt', '.gitignore', 'scripts/generate_docs.py']
+    required_files = ['requirements.txt', '.gitignore', 'scripts/generate_docs_v4.py']
     
     missing = []
     for d in required_dirs:
