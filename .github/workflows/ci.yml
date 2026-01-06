@@ -11,6 +11,11 @@ on:
 permissions:
   contents: write
 
+# [안정성 추가] 동시 실행 방지 (문서 충돌 방지)
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-and-doc:
     runs-on: ubuntu-latest
