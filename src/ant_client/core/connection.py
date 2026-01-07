@@ -68,6 +68,15 @@ class ConnectionManager:
                         
                 except json.JSONDecodeError:
                     pass
+                    
+                # Relay Handling
+                # We assume message is JSON. If it was decrypted above, 'data' is the dict.
+                if isinstance(data, dict) and data.get("type") == "RELAY":
+                    # { "type": "RELAY", "sender_id": "...", "payload": "..." }
+                    sender_id = data.get("sender_id")
+                    payload = data.get("payload")
+                    if self.p2p_callback:
+                         asyncio.create_task(self.p2p_callback(sender_id, payload))
         except websockets.exceptions.ConnectionClosed:
             logger.info("WebSocket connection closed.")
             raise
@@ -109,7 +118,33 @@ class ConnectionManager:
         except Exception as e:
             logger.error(f"Failed to send heartbeat: {e}")
 
+    async def send_relay_packet(self, target_id: str, payload: str):
+        """Sends a P2P packet via Queen Relay (Fallback)."""
+        if not self.is_connected: return False
+        
+        msg = {
+            "type": "RELAY",
+            "target_id": target_id,
+            "payload": payload
+        }
+        try:
+            # We can encrypt this outer envelope or trust TLS. 
+            # For Phase 13, check if we need e2e encryption of the inner payload (P2P encrypts it?)
+            # Assuming P2P payload is opaque bytes (base64 encoded string).
+            await self.connection.send(json.dumps(msg))
+            return True
+        except Exception as e:
+            logger.error(f"Relay Send Error: {e}")
+            return False
+
     async def close(self):
         self.should_reconnect = False
         if self.connection:
             await self.connection.close()
+
+    # Callback for P2P Engine
+    p2p_callback: Optional[Callable[[str, Any], Awaitable[None]]] = None
+    
+    def set_p2p_callback(self, callback):
+        self.p2p_callback = callback
+

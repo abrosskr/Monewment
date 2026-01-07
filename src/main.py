@@ -546,6 +546,7 @@ def get_client_version():
     return {
         "version": "1.0.0", 
         "download_url": "https://download.monewment.com/installer.exe",
+        "hash": "sha256:dummy_hash_for_testing_integrity",
         "force_update": False
     }
 
@@ -697,8 +698,29 @@ async def ant_websocket_endpoint(websocket: WebSocket, client_id: str):
                         await redis.set(f"ant:info:{client_id}", json.dumps(info))
                     else:
                         print("DEBUG: Redis is None!") # DEBUG
-                
-                # Ack (Encrypted optional, but good practice)
+                        
+                elif msg_type == "RELAY":
+                    # [Phase 14] NAT Traversal Relay Handler
+                    # Format: { "type": "RELAY", "target_id": "...", "payload": "..." }
+                    target_id = payload.get("target_id")
+                    inner_payload = payload.get("payload") # Encrypted blob or P2P packet
+                    
+                    if target_id and inner_payload:
+                        # Forward to Target
+                        # We wrap it back in a "RELAY" envelope so the recipient knows it came via Queen
+                        relay_msg = json.dumps({
+                           "type": "RELAY",
+                           "sender_id": client_id,
+                           "payload": inner_payload
+                        })
+                        
+                        sent = await manager.send_message(target_id, relay_msg)
+                        if sent:
+                            logger.debug(f"📡 Relayed {len(inner_payload)} bytes: {client_id} -> {target_id}")
+                        else:
+                            logger.warning(f"🚫 Relay Failed: Target {target_id} not connected.")
+                            # Optional: Send 'Relay Failed' Ack back to sender
+
                 # For speed, Ack implies 'Received & Verified'
                 await websocket.send_text(json.dumps({"type": "ack", "status": "verified"}))
                 

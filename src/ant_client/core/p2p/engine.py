@@ -11,6 +11,13 @@ class P2PEngine:
         self.port = port
         self.protocol = None
         self.transport = None
+        self.relay_transport = None
+
+    def set_relay_transport(self, callback):
+        """Sets the callback for sending packets via Queen Relay."""
+        self.relay_transport = callback
+        if self.protocol:
+            self.protocol.set_relay_transport(callback)
 
     async def start(self):
         """
@@ -24,6 +31,10 @@ class P2PEngine:
             lambda: P2PProtocol(self),
             local_addr=('0.0.0.0', self.port)
         )
+
+        if self.relay_transport:
+            protocol.set_relay_transport(self.relay_transport)
+
         
         self.transport = transport
         self.protocol = protocol

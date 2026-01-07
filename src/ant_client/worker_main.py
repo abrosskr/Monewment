@@ -23,7 +23,21 @@ async def main():
     
     # Connection Manager
     conn = ConnectionManager(server_url, client_id, security)
-    executor = JobExecutor(client_id)
+    
+    # [Phase 13] P2P Engine & Relay Integration
+    from src.ant_client.core.p2p.engine import P2PEngine
+    p2p = P2PEngine(client_id)
+    await p2p.start() # Start UDP Server
+    
+    # Wire Relay: Client -> Queen -> Target
+    p2p.set_relay_transport(conn.send_relay_packet)
+    
+    # Wire Relay Receive: Queen -> Client -> P2P Engine
+    # Wait for protocol to be ready (start() creates it)
+    if p2p.protocol:
+        conn.set_p2p_callback(p2p.protocol.handle_relayed_packet)
+    
+    executor = JobExecutor(client_id) # Should eventually take p2p or vault
     conn.set_executor(executor)
     
     # Start Connection in background
