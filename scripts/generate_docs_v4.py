@@ -8,8 +8,11 @@ import sys
 import json
 from datetime import datetime
 
-# 프로젝트 루트를 Python 경로에 추가
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# 프로젝트 루트와 스크립트 디렉토리를 Python 경로에 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir)
+sys.path.insert(0, root_dir) # For src imports
+sys.path.insert(0, current_dir) # For generators imports
 
 from generators.db_schema_generator import generate_db_schema_docs
 from generators.api_docs_generator import generate_api_docs
