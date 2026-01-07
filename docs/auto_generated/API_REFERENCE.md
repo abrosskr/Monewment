@@ -1,6 +1,6 @@
 # 📡 Monewment API Reference
 
-> **Last Updated:** 2026-01-06 16:33:10\n\n> **Base URL:** `http://localhost:8001`\n\n> **Total Endpoints:** 26\n\n---\n\n## 🔐 Authentication\n\nMost endpoints require JWT authentication. Include the token in the Authorization header:\n\n```http\nAuthorization: Bearer <your_jwt_token>\n```\n\n### Obtaining a Token\n\n```http\nPOST /api/auth/login\nContent-Type: application/json\n\n{\n  "email": "user@example.com",\n  "password": "your_password"\n}\n```\n\n---\n\n## 📂 Admin\n\n### `GET /api/admin/schema`\n\n**Description:** [최적화] DB Inspector를 통해 실제 테이블 구조를 반환합니다.\n\n**Function:** `get_real_db_schema()`\n\n**Request Example:**\n\n```http\nGET /api/admin/schema HTTP/1.1\nHost: localhost:8001\nAuthorization: Bearer <token>\n```\n\n**Response Example:**\n\n```json\n{
+> **Last Updated:** 2026-01-07 14:56:46\n\n> **Base URL:** `http://localhost:8001`\n\n> **Total Endpoints:** 29\n\n---\n\n## 🔐 Authentication\n\nMost endpoints require JWT authentication. Include the token in the Authorization header:\n\n```http\nAuthorization: Bearer <your_jwt_token>\n```\n\n### Obtaining a Token\n\n```http\nPOST /api/auth/login\nContent-Type: application/json\n\n{\n  "email": "user@example.com",\n  "password": "your_password"\n}\n```\n\n---\n\n## 📂 Admin\n\n### `GET /api/admin/schema`\n\n**Description:** [최적화] DB Inspector를 통해 실제 테이블 구조를 반환합니다.\n\n**Function:** `get_real_db_schema()`\n\n**Request Example:**\n\n```http\nGET /api/admin/schema HTTP/1.1\nHost: localhost:8001\nAuthorization: Bearer <token>\n```\n\n**Response Example:**\n\n```json\n{
   "message": "Success",
   "data": {}
 }```\n\n---\n\n### `GET /api/admin/endpoints`\n\n**Description:** [신규] FastAPI 라우트 정보를 실시간으로 추출하여 반환합니다.\n\n**Function:** `get_real_api_endpoints()`\n\n**Request Example:**\n\n```http\nGET /api/admin/endpoints HTTP/1.1\nHost: localhost:8001\nAuthorization: Bearer <token>\n```\n\n**Response Example:**\n\n```json\n{
@@ -93,10 +93,19 @@
 }```\n\n---\n\n### `GET /api/auth/me`\n\n**Description:** Read Users Me\n\n**Function:** `read_users_me()`\n\n**Request Example:**\n\n```http\nGET /api/auth/me HTTP/1.1\nHost: localhost:8001\n```\n\n**Response Example:**\n\n```json\n{
   "message": "Success",
   "data": {}
-}```\n\n---\n\n## 📂 General\n\n### `GET /`\n\n**Description:** 시스템 헬스 체크 및 현재 가동 모드를 확인합니다.\n\n**Function:** `read_root()`\n\n**Request Example:**\n\n```http\nGET / HTTP/1.1\nHost: localhost:8001\nAuthorization: Bearer <token>\n```\n\n**Response Example:**\n\n```json\n{
+}```\n\n---\n\n## 📂 General\n\n### `GET /ping`\n\n**Description:** Ping\n\n**Function:** `ping()`\n\n**Request Example:**\n\n```http\nGET /ping HTTP/1.1\nHost: localhost:8001\nAuthorization: Bearer <token>\n```\n\n**Response Example:**\n\n```json\n{
+  "message": "Success",
+  "data": {}
+}```\n\n---\n\n### `POST /api/deepsync/generate`\n\n**Description:** DeepSync 작업을 요청하고 최적의 개미(Ant)에게 할당합니다.\n\n**Function:** `submit_job()`\n\n**Request Example:**\n\n```http\nPOST /api/deepsync/generate HTTP/1.1\nHost: localhost:8001\nContent-Type: application/json\nAuthorization: Bearer <token>\n\n{}```\n\n**Response Example:**\n\n```json\n{
+  "message": "Success",
+  "data": {}
+}```\n\n---\n\n### `GET /`\n\n**Description:** 시스템 헬스 체크 및 현재 가동 모드를 확인합니다.\n\n**Function:** `read_root()`\n\n**Request Example:**\n\n```http\nGET / HTTP/1.1\nHost: localhost:8001\nAuthorization: Bearer <token>\n```\n\n**Response Example:**\n\n```json\n{
   "message": "Success",
   "data": {}
 }```\n\n---\n\n### `GET /api/services/list`\n\n**Description:** 플랫폼에서 제공하는 설치 가능 및 설치된 기능 목록을 조회합니다.\n\n**Function:** `get_services_list()`\n\n**Request Example:**\n\n```http\nGET /api/services/list HTTP/1.1\nHost: localhost:8001\nAuthorization: Bearer <token>\n```\n\n**Response Example:**\n\n```json\n{
+  "message": "Success",
+  "data": {}
+}```\n\n---\n\n### `GET /api/client/version`\n\n**Description:** Ant Client가 최신 버전인지 확인합니다.\n\n**Function:** `get_client_version()`\n\n**Request Example:**\n\n```http\nGET /api/client/version HTTP/1.1\nHost: localhost:8001\nAuthorization: Bearer <token>\n```\n\n**Response Example:**\n\n```json\n{
   "message": "Success",
   "data": {}
 }```\n\n---\n\n### `POST /api/services/keys`\n\n**Description:** Gemini 또는 OpenAI의 API 키를 .env 파일에 안전하게 업데이트합니다.\n\n**Function:** `update_api_key()`\n\n**Request Example:**\n\n```http\nPOST /api/services/keys HTTP/1.1\nHost: localhost:8001\nContent-Type: application/json\nAuthorization: Bearer <token>\n\n{}```\n\n**Response Example:**\n\n```json\n{
