@@ -23,10 +23,11 @@ class BlenderOps:
         Parses stdout for progress.
         """
         
-        # Command: blender -b file.blend -o output_path -f frame
+        # Command: blender -b file.blend --disable-autoexec -o output_path -f frame
         cmd = [
             self.blender_path,
             "-b", blend_file,
+            "--disable-autoexec", # [Security] Disable script auto-execution
             "-o", output_path,
             "-f", str(frame)
         ]

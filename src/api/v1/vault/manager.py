@@ -12,6 +12,27 @@ from src.models import User, VaultFile, VaultShard
 
 router = APIRouter()
 
+from fastapi import UploadFile, File
+
+@router.post("/manager/upload/verify_header")
+async def verify_upload_header(
+    file: UploadFile = File(...),
+    user: User = Depends(get_api_key_user)
+):
+    """
+    [Security] Verify that the uploaded file is a valid Blender file.
+    Reads first 7 bytes for 'BLENDER' magic header.
+    """
+    # 1. Read Magic Header
+    # Note: 'read' is async in FastAPI UploadFile
+    header = await file.read(7)
+    await file.seek(0) # Reset cursor for subsequent use
+    
+    if header != b'BLENDER':
+        raise HTTPException(status_code=400, detail="Invalid file format. Not a valid .blend file.")
+        
+    return {"status": "valid", "filename": file.filename}
+
 class UploadInitRequest(BaseModel):
     filename: str
     file_size_bytes: int
