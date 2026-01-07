@@ -212,38 +212,9 @@ app.include_router(tools.router, prefix=settings.API_V1_STR)
 # [신규] UI Factory (자동 코딩 머신) API 등록
 app.include_router(ui_factory.router)
 
-# [Phase 5] DeepSync Job API
-@app.post("/api/deepsync/generate")
-async def submit_job(req: JobRequest):
-    """DeepSync 작업을 요청하고 최적의 개미(Ant)에게 할당합니다."""
-    # 1. Schedule
-    # For now, we trust the client req, but ideally we regenerate ID and set timestamps.
-    worker_id = await scheduler.schedule_job(req)
-    
-    if not worker_id:
-        raise HTTPException(status_code=503, detail="No suitable Ant workers available.")
-        
-    # 2. Dispatch
-    from src.core.socket_manager import SocketManager
-    manager = SocketManager.get_instance()
-    
-    if not manager.get_connection(worker_id):
-         raise HTTPException(status_code=503, detail=f"Worker {worker_id} scheduled but connection lost.")
-         
-    try:
-        # Send Job Request to Ant
-        # Ant expects: {"type": "job_request", "data": <JobRequest>}
-        payload = {"type": "job_request", "data": req.dict()}
-        # Ensure we use json dumps for payload
-        msg = json.dumps(payload, default=str)
-        await manager.send_message(worker_id, msg)
-        logger.info(f"🚀 Job {req.job_id} dispatched to {worker_id}")
-        
-        return {"status": "assigned", "job_id": req.job_id, "worker_id": worker_id}
-        
-    except Exception as e:
-        logger.error(f"Dispatch Error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to dispatch job to worker.")
+# [Legacy DeepSync Endpoint Removed]
+# Functionality migrated to src/api/v1/sync/router.py
+
 
 # [Phase 5-2] Admin Monitoring
 # [Phase 5-2] Admin Monitoring (Updated path)
