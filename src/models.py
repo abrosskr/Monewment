@@ -52,6 +52,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    api_key = Column(String, unique=True, index=True, nullable=True) # [API-First] External Access Key
     role = Column(Enum(UserRole), default=UserRole.MEMBER) # 시스템 전체 계급장
     
     org_id = Column(Integer, ForeignKey("organizations.id"))
@@ -244,6 +245,7 @@ class VMInstance(Base):
     
     status = Column(String, default="PROVISIONING") # PROVISIONING, RUNNING, STOPPED, TERMINATED
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_seen = Column(DateTime(timezone=True), nullable=True)
     
     project = relationship("Project", backref="vms")
     flavor = relationship("VMFlavor")
@@ -271,3 +273,47 @@ class VMUsage(Base):
 
     vm = relationship("VMInstance", backref="usage_history")
     ai_model = relationship("AIModel")
+
+# --- Phase 6: DeepVault Models ---
+
+class VaultFile(Base):
+    """
+    [Storage] 업로드된 파일의 메타데이터 (File System Layer)
+    - 실제 데이터는 조각나서(Shard) Ant들에게 분산 저장됨.
+    """
+    __tablename__ = "vault_files"
+    id = Column(Integer, primary_key=True, index=True)
+    
+    filename = Column(String, nullable=False)
+    file_hash = Column(String, unique=True, index=True, nullable=False) # SHA256 of Original File
+    file_size = Column(Integer, nullable=False) # Bytes
+    encrypted_size = Column(Integer, nullable=False) # Bytes
+    
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    status = Column(String, default="UPLOADING") # UPLOADING, AVAILABLE, BROKEN
+    
+    # Encryption Key (In Production, this should NOT be here. Use Vault/KMS. For now, we store encrypted key?)
+    # ideally, client keeps the key. Or we store it encrypted by user's password.
+    # To simplify Phase 6, we store the file_key_hex here.
+    encryption_key = Column(String, nullable=True) 
+    
+    shards = relationship("VaultShard", back_populates="file")
+    owner = relationship("User")
+
+class VaultShard(Base):
+    """
+    [Storage] 파일 조각의 위치 정보 (Location Map)
+    """
+    __tablename__ = "vault_shards"
+    id = Column(Integer, primary_key=True, index=True)
+    
+    file_id = Column(Integer, ForeignKey("vault_files.id"))
+    shard_index = Column(Integer, nullable=False) # 0 to N+M-1
+    shard_hash = Column(String, nullable=True) # Integrity Check
+    
+    # 어디에 저장되어 있는가? (List of Ant Client IDs)
+    # JSON List: ["ant_123", "ant_456"] (Replication supported)
+    stored_at = Column(JSON, default=[]) 
+    
+    file = relationship("VaultFile", back_populates="shards")

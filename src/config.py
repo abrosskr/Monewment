@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str
     CLAUDE_API_KEY: Optional[str] = None
 
+    # DeepRender Settings
+    # Default: Assumes standard installation or PATH availability
+    BLENDER_PATH: str = "C:\\Program Files\\Blender Foundation\\Blender 5.0\\blender.exe"
+
     # JWT Settings
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours

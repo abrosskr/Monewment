@@ -3,7 +3,9 @@ from pydantic import BaseModel
 from typing import List, Optional
 import logging
 from datetime import datetime, timezone
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from src.dependencies import get_db
 from src.models import VMInstance, VMFlavor, VMUsage, AIModel, Project
 
@@ -44,15 +46,22 @@ def calculate_cost(usage: VMUsage, end_time: datetime) -> float:
 # --- Endpoints ---
 
 @router.get("", response_model=List[VMStatusResponse])
-def list_vms(db: Session = Depends(get_db)):
+async def list_vms(db: AsyncSession = Depends(get_db)):
     """List all VMs from Database."""
-    vms = db.query(VMInstance).all()
+    result = await db.execute(select(VMInstance).options(selectinload(VMInstance.flavor)))
+    vms = result.scalars().all()
     results = []
     
     for vm in vms:
         # Calculate real-time cost for active session
         current_cost = 0.0
-        active_usage = db.query(VMUsage).filter(VMUsage.vm_id == vm.id, VMUsage.end_time.is_(None)).first()
+        # Check usage
+        usage_res = await db.execute(select(VMUsage).where(
+            VMUsage.vm_id == vm.id, 
+            VMUsage.end_time.is_(None)
+        ))
+        active_usage = usage_res.scalars().first()
+        
         if active_usage:
             # Note: start_time in DB should be timezone aware or UTC. Assuming UTC.
             now = datetime.now(timezone.utc)
@@ -74,22 +83,25 @@ def list_vms(db: Session = Depends(get_db)):
     return results
 
 @router.post("", response_model=VMStatusResponse)
-def create_vm(req: VMCreateRequest, db: Session = Depends(get_db)):
+async def create_vm(req: VMCreateRequest, db: AsyncSession = Depends(get_db)):
     """Create VM: DB Record -> Usage Start -> KubeVirt/Stub Launch"""
     
     # 1. Validation
-    flavor = db.query(VMFlavor).filter(VMFlavor.id == req.flavor_id).first()
+    res_flav = await db.execute(select(VMFlavor).where(VMFlavor.id == req.flavor_id))
+    flavor = res_flav.scalars().first()
     if not flavor:
         raise HTTPException(status_code=404, detail="Flavor not found")
         
     ai_model = None
     if req.ai_model_id:
-        ai_model = db.query(AIModel).filter(AIModel.id == req.ai_model_id).first()
+        res_ai = await db.execute(select(AIModel).where(AIModel.id == req.ai_model_id))
+        ai_model = res_ai.scalars().first()
         if not ai_model:
             raise HTTPException(status_code=404, detail="AI Model not found")
 
     # 2. Check for Duplicates
-    if db.query(VMInstance).filter(VMInstance.name == req.name).first():
+    res_dup = await db.execute(select(VMInstance).where(VMInstance.name == req.name))
+    if res_dup.scalars().first():
         raise HTTPException(status_code=400, detail="VM name already exists")
 
     # 3. Create VM Record
@@ -100,8 +112,8 @@ def create_vm(req: VMCreateRequest, db: Session = Depends(get_db)):
         status="PROVISIONING"
     )
     db.add(new_vm)
-    db.commit()
-    db.refresh(new_vm)
+    await db.commit()
+    await db.refresh(new_vm)
 
     # 4. Start Metering (Usage Session)
     usage = VMUsage(
@@ -112,7 +124,7 @@ def create_vm(req: VMCreateRequest, db: Session = Depends(get_db)):
         applied_model_rate=ai_model.hourly_surcharge if ai_model else 0.0
     )
     db.add(usage)
-    db.commit()
+    await db.commit()
 
     # 5. Launch Infrastructure (Stub or KubeVirt)
     try:
@@ -137,14 +149,14 @@ def create_vm(req: VMCreateRequest, db: Session = Depends(get_db)):
         
         # update status
         new_vm.status = "RUNNING"
-        db.commit()
+        await db.commit()
         
     except Exception as e:
         logger.error(f"VM Creation Failed: {e}")
         # Rollback Usage
-        db.delete(usage)
-        db.delete(new_vm)
-        db.commit()
+        await db.delete(usage)
+        await db.delete(new_vm)
+        await db.commit()
         raise HTTPException(status_code=500, detail=str(e))
 
     return VMStatusResponse(
@@ -153,14 +165,17 @@ def create_vm(req: VMCreateRequest, db: Session = Depends(get_db)):
     )
 
 @router.delete("/{name}")
-def delete_vm(name: str, db: Session = Depends(get_db)):
+async def delete_vm(name: str, db: AsyncSession = Depends(get_db)):
     """Stop VM: Stop Usage -> Calculate Cost -> Terminate Infra"""
-    vm = db.query(VMInstance).filter(VMInstance.name == name).first()
+    res_vm = await db.execute(select(VMInstance).where(VMInstance.name == name))
+    vm = res_vm.scalars().first()
     if not vm:
         raise HTTPException(status_code=404, detail="VM not found")
         
     # 1. Stop Metering
-    active_usage = db.query(VMUsage).filter(VMUsage.vm_id == vm.id, VMUsage.end_time.is_(None)).first()
+    res_usage = await db.execute(select(VMUsage).where(VMUsage.vm_id == vm.id, VMUsage.end_time.is_(None)))
+    active_usage = res_usage.scalars().first()
+    
     if active_usage:
         now = datetime.now(timezone.utc)
         active_usage.end_time = now
@@ -174,7 +189,7 @@ def delete_vm(name: str, db: Session = Depends(get_db)):
         cost = (duration / 3600.0) * rate
         active_usage.total_cost = round(cost, 4)
         
-        db.commit()
+        await db.commit()
 
     # 2. Terminate Infra
     if k8s:
@@ -185,23 +200,27 @@ def delete_vm(name: str, db: Session = Depends(get_db)):
 
     # 3. Update DB
     vm.status = "TERMINATED"
-    db.commit()
+    await db.commit()
 
     return {"status": "success", "message": f"VM {name} terminated. Cost recorded."}
 
 @router.post("/{name}/switch_model")
-def switch_model(name: str, req: VMSwitchModelRequest, db: Session = Depends(get_db)):
+async def switch_model(name: str, req: VMSwitchModelRequest, db: AsyncSession = Depends(get_db)):
     """Dynamic Billing: Close current usage -> Start new usage with new rate"""
-    vm = db.query(VMInstance).filter(VMInstance.name == name).first()
+    res_vm = await db.execute(select(VMInstance).options(selectinload(VMInstance.flavor)).where(VMInstance.name == name))
+    vm = res_vm.scalars().first()
     if not vm:
         raise HTTPException(status_code=404, detail="VM not found")
         
-    new_model = db.query(AIModel).filter(AIModel.id == req.new_model_id).first()
+    res_new = await db.execute(select(AIModel).where(AIModel.id == req.new_model_id))
+    new_model = res_new.scalars().first()
     if not new_model:
         raise HTTPException(status_code=404, detail="Model not found")
         
     # 1. Close active usage
-    active_usage = db.query(VMUsage).filter(VMUsage.vm_id == vm.id, VMUsage.end_time.is_(None)).first()
+    res_usage = await db.execute(select(VMUsage).where(VMUsage.vm_id == vm.id, VMUsage.end_time.is_(None)))
+    active_usage = res_usage.scalars().first()
+    
     if active_usage:
         now = datetime.now(timezone.utc)
         active_usage.end_time = now
@@ -225,6 +244,6 @@ def switch_model(name: str, req: VMSwitchModelRequest, db: Session = Depends(get
         applied_model_rate=new_model.hourly_surcharge
     )
     db.add(new_usage)
-    db.commit()
+    await db.commit()
     
     return {"status": "success", "message": f"Switched to model {new_model.name}. Billing rate updated."}

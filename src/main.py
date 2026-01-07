@@ -4,26 +4,92 @@ import subprocess
 import re
 import json
 import requests
+import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware 
 from pydantic import BaseModel 
 from datetime import datetime
-from sqlalchemy.orm import Session
-
 # [모듈 임포트]
 from src.config import settings
-from src.database import engine, SessionLocal
+from src.database import engine
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from src.models import Base, User, Organization, Project, VMInstance, VMFlavor, VMUsage, AIModel, Cluster
-from src.logger import setup_logger
+from src.core.logger import setup_logger
+from src.core.redis_client import RedisManager
+from src.core.redis_client import RedisManager
+from src.core.protocol import JobRequest, JobResult, JobStatus, JobType
+from src.core.scheduler import Scheduler
+from src.core.ant_security import AntSecurity
 # [수정] ui_factory 라우터 추가
 from src.routers import tools, ui_factory 
 from src.collector import collector
 from src.core.security import hash_password, verify_password, create_access_token, get_current_user, validate_project_path
-from sqlalchemy import func
 
 logger = setup_logger()
+logger = setup_logger()
 running_processes = {}
+background_tasks = {} # To hold references to background tasks
+background_tasks = {} # To hold references to background tasks
+# active_ant_sockets: dict[str, WebSocket] = {} # REPLACED by SocketManager
+scheduler = Scheduler()
+scheduler = Scheduler()
+
+async def background_task_saver():
+    """
+    [Write-Behind] Redis에 쌓인 Heartbeat 정보를 1분마다 DB에 일괄 반영합니다.
+    """
+    logger.info("💾 Write-Behind Task Started.")
+    try:
+        while True:
+            await asyncio.sleep(60) # 1분 대기
+            
+            redis = RedisManager.get_instance().get_client()
+            if not redis: continue
+            
+            # Scan keys: ant:heartbeat:{client_id}
+            # Note: In production with millions of keys, use SCAN iter. 
+            # For 10k connections, keys() is acceptable but SCAN is safer.
+            keys = await redis.keys("ant:heartbeat:*")
+            if not keys: continue
+            
+            updates = {} # client_id -> timestamp (str)
+            for key in keys:
+                ts = await redis.get(key)
+                if ts:
+                    client_id = key.split(":")[-1] 
+                    updates[client_id] = datetime.fromisoformat(ts)
+            
+            if updates:
+                # Bulk Update DB
+                # We need a new session context
+                session_gen = get_db()
+                db = await anext(session_gen)
+                try:
+                    # Update each VMInstance last_seen
+                    # Optimization: Use bulk_update_mappings if possible, but async session requires execute
+                    for cid, timestamp in updates.items():
+                        # Assuming client_id matches VM Name or ID. 
+                        # Ideally Client ID matches VM Name for simplicity here.
+                        # If using ID, cast to int.
+                        await db.execute(
+                            VMInstance.__table__.update()
+                            .where(VMInstance.name == cid)
+                            .values(last_seen=timestamp)
+                        )
+                    await db.commit()
+                    logger.info(f"💾 Saved {len(updates)} heartbeats to DB.")
+                except Exception as e:
+                    logger.error(f"Write-Behind Error: {e}")
+                    await db.rollback()
+                finally:
+                    await db.close()
+
+    except asyncio.CancelledError:
+        logger.info("💾 Write-Behind Task Cancelled.")
+
 
 # --- [DTO: 데이터 전송 객체 정의] ---
 class SignupRequest(BaseModel):
@@ -88,10 +154,11 @@ from src.dependencies import get_db
 async def lifespan(app: FastAPI):
     logger.info("🚀 Starting up... Checking Database Schema...")
     
-    # [변경] 비동기(async with) -> 동기식 호출
+    # [변경] Async Engine 사용 테이블 생성
     try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("✅ Database Tables Created (Sync Mode).")
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("✅ Database Tables Verified (Async Mode).")
     except Exception as e:
         logger.error(f"❌ DB Init Error: {e}")
 
@@ -99,13 +166,38 @@ async def lifespan(app: FastAPI):
     collector.set_app(app)
     logger.info("✅ System Collector Attached.")
 
+    await RedisManager.get_instance().connect()
+    logger.info("✅ Redis Connected.")
+
+    # [신규] Write-Behind Task Start
+    task = asyncio.create_task(background_task_saver())
+    background_tasks["saver"] = task
+
     yield
+    
+    # [신규] Cancel Background Task
+    if "saver" in background_tasks:
+        background_tasks["saver"].cancel()
+        try:
+            await background_tasks["saver"]
+        except asyncio.CancelledError:
+            pass
+
+
+    # [신규] Redis Disconnection
+    await RedisManager.get_instance().close()
+    logger.info("🛑 Redis Connection Closed.")
     
     for name, proc in running_processes.items():
         proc.terminate()
     logger.info("🛑 Shutting down...")
 
 app = FastAPI(title="Monewment Platform", version="4.8-UIFactory", lifespan=lifespan)
+
+@app.get("/ping")
+async def ping():
+    print("DEBUG: Ping Request Received")
+    return {"status": "pong"}
 
 app.add_middleware(
     CORSMiddleware,
@@ -120,9 +212,57 @@ app.include_router(tools.router, prefix=settings.API_V1_STR)
 # [신규] UI Factory (자동 코딩 머신) API 등록
 app.include_router(ui_factory.router)
 
-# [Phase 3] VM Management Router
+# [Phase 5] DeepSync Job API
+@app.post("/api/deepsync/generate")
+async def submit_job(req: JobRequest):
+    """DeepSync 작업을 요청하고 최적의 개미(Ant)에게 할당합니다."""
+    # 1. Schedule
+    # For now, we trust the client req, but ideally we regenerate ID and set timestamps.
+    worker_id = await scheduler.schedule_job(req)
+    
+    if not worker_id:
+        raise HTTPException(status_code=503, detail="No suitable Ant workers available.")
+        
+    # 2. Dispatch
+    from src.core.socket_manager import SocketManager
+    manager = SocketManager.get_instance()
+    
+    if not manager.get_connection(worker_id):
+         raise HTTPException(status_code=503, detail=f"Worker {worker_id} scheduled but connection lost.")
+         
+    try:
+        # Send Job Request to Ant
+        # Ant expects: {"type": "job_request", "data": <JobRequest>}
+        payload = {"type": "job_request", "data": req.dict()}
+        # Ensure we use json dumps for payload
+        msg = json.dumps(payload, default=str)
+        await manager.send_message(worker_id, msg)
+        logger.info(f"🚀 Job {req.job_id} dispatched to {worker_id}")
+        
+        return {"status": "assigned", "job_id": req.job_id, "worker_id": worker_id}
+        
+    except Exception as e:
+        logger.error(f"Dispatch Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to dispatch job to worker.")
+
+# [Phase 5-2] Admin Monitoring
+# [Phase 5-2] Admin Monitoring (Updated path)
+from src.api.v1.admin import monitoring
+app.include_router(monitoring.router, prefix="/api/admin/ants", tags=["Admin Monitoring"])
+
+# [Phase 4] VM Management Router
 from src.api.v1.endpoints import vm
 app.include_router(vm.router, prefix="/api/vm", tags=["Virtual Machines"])
+
+# [Phase 6-2] Modular B2B API Routers
+from src.api.v1.sync import router as sync_router
+app.include_router(sync_router.router, prefix="/api/v1/sync", tags=["DeepSync (GenAI)"])
+
+from src.api.v1.vault import router as vault_router
+app.include_router(vault_router.router, prefix="/api/v1/vault", tags=["DeepVault (Storage)"])
+
+from src.api.v1.render import router as render_router
+app.include_router(render_router.router, prefix="/api/v1/render", tags=["DeepRender (Rendering)"])
 
 @app.get("/")
 def read_root():
@@ -151,14 +291,14 @@ def get_project_tree(project_name: str):
 # [Admin Dashboard APIs]
 # ---------------------------------------------------------
 @app.get("/api/admin/stats")
-async def get_admin_stats(db: Session = Depends(get_db)):
+async def get_admin_stats(db: AsyncSession = Depends(get_db)):
     """관리자용 대시보드 통계 정보를 반환합니다."""
-    total_users = db.query(User).count()
-    total_projects = db.query(Project).count()
-    active_vms = db.query(VMInstance).filter(VMInstance.status == "RUNNING").count()
+    total_users = await db.scalar(select(func.count(User.id)))
+    total_projects = await db.scalar(select(func.count(Project.id)))
+    active_vms = await db.scalar(select(func.count(VMInstance.id)).where(VMInstance.status == "RUNNING"))
     
     # 총 매출 계산 (단순 합계)
-    total_revenue = db.query(func.sum(VMUsage.total_cost)).scalar() or 0
+    total_revenue = await db.scalar(select(func.sum(VMUsage.total_cost))) or 0
     
     return {
         "users": total_users,
@@ -168,12 +308,14 @@ async def get_admin_stats(db: Session = Depends(get_db)):
     }
 
 @app.get("/api/admin/vms")
-async def get_all_vms(db: Session = Depends(get_db)):
+async def get_all_vms(db: AsyncSession = Depends(get_db)):
     """모든 프로젝트에서 실행 중인 VM 리스트를 반환합니다."""
-    vms = db.query(VMInstance).all()
-    result = []
+    result = await db.execute(select(VMInstance))
+    vms = result.scalars().all()
+    
+    result_list = []
     for vm in vms:
-        result.append({
+        result_list.append({
             "id": vm.id,
             "name": vm.name,
             "status": vm.status,
@@ -181,52 +323,64 @@ async def get_all_vms(db: Session = Depends(get_db)):
             "flavor": vm.flavor_id,
             "created_at": vm.created_at
         })
-    return {"vms": result}
+    return {"vms": result_list}
 
 @app.get("/api/admin/pricing/flavors")
-async def get_flavors(db: Session = Depends(get_db)):
+async def get_flavors(db: AsyncSession = Depends(get_db)):
     """현재 등록된 VM 등급별 시간당 요금을 조회합니다."""
-    flavors = db.query(VMFlavor).all()
+    result = await db.execute(select(VMFlavor))
+    flavors = result.scalars().all()
     return {"flavors": [{"id": f.id, "name": f.name, "hourly_rate": float(f.hourly_rate)} for f in flavors]}
 
 @app.patch("/api/admin/pricing/flavors/{flavor_id}")
-async def update_flavor_rate(flavor_id: int, req: PricingUpdateRequest, db: Session = Depends(get_db)):
+async def update_flavor_rate(flavor_id: int, req: PricingUpdateRequest, db: AsyncSession = Depends(get_db)):
     """특정 VM 등급의 시간당 요금을 실시간으로 업데이트합니다."""
-    flavor = db.query(VMFlavor).filter(VMFlavor.id == flavor_id).first()
+    result = await db.execute(select(VMFlavor).where(VMFlavor.id == flavor_id))
+    flavor = result.scalars().first()
+    
     if not flavor:
         raise HTTPException(status_code=404, detail="Flavor not found")
     
     flavor.hourly_rate = req.hourly_rate
-    db.commit()
+    await db.commit()
     return {"status": "success", "new_rate": float(flavor.hourly_rate)}
 
 @app.get("/api/admin/hierarchy")
-async def get_system_hierarchy(db: Session = Depends(get_db)):
+async def get_system_hierarchy(db: AsyncSession = Depends(get_db)):
     """[최상위 관리자] 시스템 전체 계층 구조(Cluster -> Org -> Project)를 조회합니다."""
-    clusters = db.query(Cluster).all()
-    result = []
-    for c in clusters:
-        orgs = []
-        for org in c.organizations:
-            projs = [{"id": p.id, "name": p.name, "status": p.status} for p in org.projects]
-            orgs.append({
-                "id": org.id,
-                "name": org.name,
-                "status": org.status,
-                "projects": projs,
-                "quota": {"cpu": org.quota_cpu, "ram": org.quota_ram_gb, "gpu": org.quota_gpu}
+    try:
+        stmt = select(Cluster).options(
+            selectinload(Cluster.organizations).selectinload(Organization.projects)
+        )
+        result = await db.execute(stmt)
+        clusters = result.scalars().all()
+        
+        cluster_list = []
+        for c in clusters:
+            orgs = []
+            for org in c.organizations:
+                projs = [{"id": p.id, "name": p.name, "status": p.status} for p in org.projects]
+                orgs.append({
+                    "id": org.id,
+                    "name": org.name,
+                    "status": org.status,
+                    "projects": projs,
+                    "quota": {"cpu": org.quota_cpu, "ram": org.quota_ram_gb, "gpu": org.quota_gpu}
+                })
+            cluster_list.append({
+                "id": c.id,
+                "name": c.name,
+                "region": c.region,
+                "status": c.status,
+                "organizations": orgs
             })
-        result.append({
-            "id": c.id,
-            "name": c.name,
-            "region": c.region,
-            "status": c.status,
-            "organizations": orgs
-        })
-    return {"hierarchy": result}
+        return {"hierarchy": cluster_list}
+    except Exception as e:
+        logger.error(f"Hierarchy Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/admin/clusters")
-async def create_cluster(req: ClusterCreateRequest, db: Session = Depends(get_db)):
+async def create_cluster(req: ClusterCreateRequest, db: AsyncSession = Depends(get_db)):
     """[최상위 관리자] 새 클러스터를 시스템에 등록합니다."""
     new_cluster = Cluster(
         name=req.name, 
@@ -236,13 +390,15 @@ async def create_cluster(req: ClusterCreateRequest, db: Session = Depends(get_db
         gpu_capacity=req.gpu_capacity
     )
     db.add(new_cluster)
-    db.commit()
+    await db.commit()
     return {"status": "success", "cluster_id": new_cluster.id}
 
 @app.post("/api/admin/organizations/approve")
-async def approve_organization(req: OrgApproveRequest, db: Session = Depends(get_db)):
+async def approve_organization(req: OrgApproveRequest, db: AsyncSession = Depends(get_db)):
     """[최상위 관리자] 입점 신청한 Organization을 승인하고 자원을 할당합니다."""
-    org = db.query(Organization).filter(Organization.id == req.org_id).first()
+    result = await db.execute(select(Organization).where(Organization.id == req.org_id))
+    org = result.scalars().first()
+    
     if not org: raise HTTPException(status_code=404, detail="Org not found")
     
     org.cluster_id = req.cluster_id
@@ -251,14 +407,16 @@ async def approve_organization(req: OrgApproveRequest, db: Session = Depends(get
     org.quota_gpu = req.quota_gpu
     org.status = "ACTIVE"
     
-    db.commit()
+    await db.commit()
     return {"status": "success"}
 
 @app.post("/api/admin/projects/expand")
-async def expand_project_topdown(req: ProjectExpandRequest, db: Session = Depends(get_db)):
+async def expand_project_topdown(req: ProjectExpandRequest, db: AsyncSession = Depends(get_db)):
     """[최상위 관리자] 특정 Organization 하위에 프로젝트를 Top-Down 방식으로 직접 배포합니다."""
     # 1. 대상 Org 확인
-    org = db.query(Organization).filter(Organization.id == req.org_id).first()
+    result = await db.execute(select(Organization).where(Organization.id == req.org_id))
+    org = result.scalars().first()
+    
     if not org: raise HTTPException(status_code=404, detail="Organization not found")
     
     # 2. 프로젝트 생성 (보안 검증 포함)
@@ -272,7 +430,7 @@ async def expand_project_topdown(req: ProjectExpandRequest, db: Session = Depend
     # DB 기록
     new_project = Project(name=req.project_name, org_id=req.org_id, status="ACTIVE")
     db.add(new_project)
-    db.commit()
+    await db.commit()
     
     return {"status": "success", "project_id": new_project.id, "path": str(target_path)}
 
@@ -280,39 +438,53 @@ async def expand_project_topdown(req: ProjectExpandRequest, db: Session = Depend
 # [Scenario 4] 회원가입 및 로그인 (Auth)
 # =========================================================
 @app.post("/api/auth/signup")
-def signup(req: SignupRequest, db: Session = Depends(get_db)):
+async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
     """새로운 사용자를 등록하고 OWNER 권한을 부여합니다."""
-    existing_user = db.query(User).filter(User.email == req.email).first()
+    result = await db.execute(select(User).where(User.email == req.email))
+    existing_user = result.scalars().first()
+    
     if existing_user:
         raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다.")
     
     hashed = hash_password(req.password)
     new_user = User(email=req.email, hashed_password=hashed, role="OWNER")
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
     return {"status": "success", "user_id": new_user.id, "message": "가입이 완료되었습니다."}
 
 @app.post("/api/auth/login")
-def login(req: LoginRequest, db: Session = Depends(get_db)):
+async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
+    print(f"DEBUG: Login Request for {req.email}")
     """이메일과 비밀번호를 검증하고 액세스 권한을 부여합니다."""
-    user = db.query(User).filter(User.email == req.email).first()
-    if not user or not verify_password(req.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 잘못되었습니다.")
-    
-    # Generate JWT Token
-    access_token = create_access_token(data={"sub": user.email})
-    
-    return {
-        "status": "success", 
-        "user_id": user.id, 
-        "name": user.email.split("@")[0], 
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    try:
+        result = await db.execute(select(User).where(User.email == req.email))
+        user = result.scalars().first()
+        
+        if not user or not verify_password(req.password, user.hashed_password):
+            print("DEBUG: Auth Failed")
+            raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 잘못되었습니다.")
+        
+        print("DEBUG: Auth Success, Generating Token...")
+        # Generate JWT Token
+        access_token = create_access_token(data={"sub": user.email})
+        print(f"DEBUG: Token Generated: {access_token[:10]}...")
+        
+        return {
+            "status": "success", 
+            "user_id": user.id, 
+            "name": user.email.split("@")[0], 
+            "access_token": access_token,
+            "token_type": "bearer"
+        }
+    except Exception as e:
+        print(f"DEBUG: Login Endpoint Error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise e
 
 @app.get("/api/auth/me")
-def read_users_me(current_user: User = Depends(get_current_user)):
+async def read_users_me(current_user: User = Depends(get_current_user)):
     """현재 로그인된 사용자의 정보를 반환합니다 (JWT 검증)."""
     return {
         "id": current_user.id,
@@ -324,7 +496,7 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 # [Scenario 5] 프로젝트(법인/팀) 생성 및 폴더 배포
 # =========================================================
 @app.post("/api/projects/create")
-def create_project_saas(req: CreateProjectRequest, db: Session = Depends(get_db)):
+async def create_project_saas(req: CreateProjectRequest, db: AsyncSession = Depends(get_db)):
     """새로운 프로젝트 엔진을 개설하고 폴더 구조 및 템플릿을 배포합니다."""
     # [보안] Path Traversal 방어 적용
     target_path = validate_project_path(req.project_name)
@@ -335,17 +507,19 @@ def create_project_saas(req: CreateProjectRequest, db: Session = Depends(get_db)
         
     try:
         # 1. DB: 법인 확인/생성
-        org = db.query(Organization).filter(Organization.name == req.organization_name).first()
+        result = await db.execute(select(Organization).where(Organization.name == req.organization_name))
+        org = result.scalars().first()
+        
         if not org:
             org = Organization(name=req.organization_name, plan_type="free")
             db.add(org)
-            db.commit()
-            db.refresh(org)
+            await db.commit()
+            await db.refresh(org)
             
         # 2. DB: 프로젝트 생성
         new_project = Project(name=req.project_name, org_id=org.id, installed_features=["logs"])
         db.add(new_project)
-        db.commit()
+        await db.commit()
         
         # 3. File: 템플릿 복사
         if not os.path.exists(template_path):
@@ -389,6 +563,19 @@ def get_services_list():
             {"id": "ui-factory", "name": "UI 자동 생성 공장", "price": 59000, "desc": "명세서를 UI 코드로 자동 변환 (SaaS)"}, # [업데이트]
             {"id": "api-analyzer", "name": "API 트래픽 분석기", "price": 29000, "desc": "API 호출량 및 상태 시각화"}
         ]
+    }
+
+# =========================================================
+# [Phase 4] OTA Update API
+# =========================================================
+@app.get("/api/client/version")
+def get_client_version():
+    """Ant Client가 최신 버전인지 확인합니다."""
+    # In production, this would read from a release DB or tag
+    return {
+        "version": "1.0.0", 
+        "download_url": "https://download.monewment.com/installer.exe",
+        "force_update": False
     }
 
 # =========================================================
@@ -463,6 +650,104 @@ async def chat_with_agent(request: ChatRequest):
         return {"response": f"Network Error: {str(e)}"}
 
 # =========================================================
+# [Phase 3] Ant Client Connection (WebSocket)
+# =========================================================
+# =========================================================
+# [Phase 3] Ant Client Connection (WebSocket)
+# =========================================================
+from src.core.socket_manager import SocketManager
+
+@app.websocket("/ws/ant/{client_id}")
+async def ant_websocket_endpoint(websocket: WebSocket, client_id: str):
+    manager = SocketManager.get_instance()
+    await manager.connect(client_id, websocket)
+    
+    # [Phase 10] Push existing token from Redis if available (Silent Start support)
+    try:
+        redis = RedisManager.get_instance().get_client()
+        token = await redis.get(f"ant:token:{client_id}")
+        if token:
+            logger.info(f"✨ Pushing cached token to {client_id}")
+            await manager.send_message(client_id, json.dumps({"type": "token_sync", "token": token}))
+    except Exception as e:
+        logger.error(f"Failed to push initial token to {client_id}: {e}")
+
+    # [Security] Initialize Decryptor
+    # In production, fetch specific shared key for this client_id from DB/Vault
+    # For now, we use the default hardcoded key in AntSecurity (or env var)
+    security = AntSecurity() 
+    
+    try:
+        redis = RedisManager.get_instance().get_client()
+        while True:
+            # Client sends encrypted token: "v1|nonce|ciphertext"
+            encrypted_data = await websocket.receive_text()
+            
+            try:
+                payload = security.decrypt_payload(encrypted_data)
+                print(f"DEBUG: Decrypted from {client_id}: {payload.get('type')}") # DEBUG
+
+                # 2. Validate Payload
+                if payload.get("client_id") != client_id:
+                    print(f"DEBUG: Client ID Mismatch") # DEBUG
+                    logger.warning(f"⚠️ Security Alert: Client ID Mismatch")
+                    await websocket.close(code=4003)
+                    return
+                    
+                msg_type = payload.get("type")
+                
+                if msg_type == "job_result":
+                    data = payload.get("data")
+                    print(f"DEBUG: Job Result: {data}") # DEBUG
+                    logger.info(f"🎨 Job Completed: {data.get('job_id')} by {client_id}")
+                    
+                    # [Phase 7] Save Result for UI
+                    from src.api.v1.render.router import JobDatabase
+                    from src.core.protocol import JobResult
+                    
+                    try:
+                        res = JobResult(**data)
+                        JobDatabase.add_result(res)
+                    except Exception as e:
+                        print(f"DEBUG: JobResult Parse Error: {e}") # DEBUG
+                        logger.error(f"Failed to parse JobResult: {e}")
+                        
+                elif msg_type == "heartbeat":
+                    # Update status in Redis
+                    status = payload.get("status", "ONLINE")
+                    if redis:
+                        await redis.set(f"ant:heartbeat:{client_id}", str(datetime.now()), ex=60)
+                        print(f"DEBUG: Saved Heartbeat {client_id}") # DEBUG
+                        info = {
+                            "status": status,
+                            "gpu": "RTX_4090", 
+                            "last_seen": str(datetime.now())
+                        }
+                        await redis.set(f"ant:info:{client_id}", json.dumps(info))
+                    else:
+                        print("DEBUG: Redis is None!") # DEBUG
+                
+                # Ack (Encrypted optional, but good practice)
+                # For speed, Ack implies 'Received & Verified'
+                await websocket.send_text(json.dumps({"type": "ack", "status": "verified"}))
+                
+            except Exception as e:
+                logger.error(f"🔐 Decryption Failed from {client_id}: {e}")
+                # Don't close immediately to avoid DoS on simple error, but in high security mode, yes.
+                await websocket.send_text(json.dumps({"type": "error", "message": "Encryption Error"}))
+                
+    except WebSocketDisconnect:
+        manager.disconnect(client_id)
+            
+    except Exception as e:
+        logger.error(f"WebSocket Error: {e}")
+        manager.disconnect(client_id)
+        try:
+            await websocket.close()
+        except:
+            pass
+
+# =========================================================
 # [Legacy / Admin]
 # =========================================================
 @app.get("/api/admin/env")
@@ -519,6 +804,11 @@ async def stop_project(project_name: str):
 @app.post("/install")
 async def install_legacy(req: InstallRequest):
     """[Legacy] 이전 방식의 프로젝트 설치 요청을 새로운 SaaS 로직으로 연결합니다."""
-    return create_project_saas(CreateProjectRequest(
-        user_id=1, project_name=req.project_name, organization_name="LegacyOrg"
-    ), next(get_db()))
+    gen_db = get_db()
+    db = await anext(gen_db)
+    try:
+        return await create_project_saas(CreateProjectRequest(
+            user_id=1, project_name=req.project_name, organization_name="LegacyOrg"
+        ), db)
+    finally:
+        await db.close()

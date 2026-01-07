@@ -1,200 +1,164 @@
-# 🏗️ Monewment: Enterprise AI/Game Dev Ops Platform
-## Strategic Master Plan (v2.3)
+# [Project Specification] DeepSync × DeepVault × DeepRender Integrated Architecture
 
+**: Web3 기반의 제로 트러스트 보안 및 분산 렌더링을 지원하는 국가급 AI 컴퓨팅 인프라**
+> **Current Version:** v2.0 (DeepRender Expanded)  
 > **Last Updated:** 2026-01-07  
-> **Status:** Phase 4 Complete (Security Hardening) / Phase 5 In-Progress (Admin Tools)  
-> **Target:** Global B2B SaaS for High-Compute Infrastructure  
 
 ---
 
-## 1. 🎯 프로젝트 개요 (Purpose)
-Monewment는 고성능 컴퓨팅 자원(GPU VM)이 필요한 **AI 연구원**과 **게임 개발자**를 위한 B2B SaaS 플랫폼입니다. Kubernetes 기반의 가상화(KubeVirt)를 통해 복잡한 인프라 설정을 자동화하고, 사용한 만큼만 지불하는 정밀한 과금과 팀 협업 기능을 제공합니다.
+## 1. 프로젝트 개요 (Executive Summary)
+
+본 프로젝트는 유휴 컴퓨팅 자원을 활용하여 3가지 핵심 가치를 창출하는 통합 플랫폼 구축을 목표로 한다.
+
+1. **DeepSync (GenAI):** LLM 기반의 고품질 합성 데이터(Synthetic Data) 생성. (✅ Core Implemented)
+2. **DeepVault (Storage):** 생성된 데이터를 파편화(Sharding)하여 원본 없는 보안 저장소 구축. (🏗️ Planned)
+3. **DeepRender (Rendering):** **(New)** 대용량 3D/영상 렌더링 작업을 프레임 단위로 분산 처리하여, 기존 렌더팜 대비 50% 비용 절감 및 10배 빠른 속도 구현. (🏗️ Planned)
+
+이 시스템은 한국의 독보적인 고사양 PC방 인프라(RTX 30/40 시리즈)를 **'단일 슈퍼컴퓨터'**처럼 통합 제어하여, 글로벌 AI 및 콘텐츠 시장의 연산 수요를 흡수한다.
 
 ---
 
-## 2. 🛠️ 개발 환경 및 도구 (Development Environment)
+## 2. 시스템 아키텍처 (System Architecture)
 
-### 2.1. 인프라 (Infrastructure)
-- **OS:** Windows (WSL2 Backend)
-- **Containerization:** Docker Desktop
-- **Orchestration:** Kubernetes (Local Dev: Docker Kubernetes)
-- **Virtualization:** KubeVirt v1.x (with Local Stub Strategy)
-- **Remote Gateway:** Apache Guacamole (Browser-based VNC)
+전체 시스템은 중앙의 통제 서버(Queen)와 분산된 노드(Ants)로 구성되며, 렌더링 파이프라인 처리를 위한 전용 모듈이 추가된다.
 
-### 2.2. 기술 스택 (Tech Stack)
-- **Backend:** 
-    - Framework: `FastAPI` (Python 3.12+)
-    - ORM/Database: `SQLAlchemy` (Sync), `PostgreSQL 15-alpine`
-    - Client: `Kubernetes Python Client`
-    - Security: `Bcrypt`, `JWT`, Path Traversal Sanitization
-- **Frontend:** 
-    - Framework: `Next.js 16.1.1` (App Router)
-    - UI: `React 19`, `Tailwind CSS 4`, `TypeScript`
-    - Design: Glassmorphism, Premium Dark Theme
-- **Authentication:** `JWT` with `Bcrypt` password hashing
-- **Payment:** (Planned) `Toss Payments`
+### A. Queen Server (Control Tower)
 
----
+* **역할:** 작업 스케줄링, 메타데이터 관리, 자산(Asset) 배포 트래커.
+* **주요 기능:**
+    * **Task Dispatcher:** AI 생성 및 렌더링 일감 배분 (우선순위 큐 관리). (✅ Implemented)
+    * **Map Manager (Vault):** 데이터 조각 위치 정보 관리. (🏗️ Planned)
+    * **Asset Tracker (Render):** **(New)** 대용량 렌더링 소스 파일(3D 모델, 텍스처)의 P2P 배포 현황 추적. (🏗️ Planned)
+    * **Stitcher (Render):** **(New)** 개미들이 보낸 낱장 이미지(Frame)를 취합하여 최종 영상 파일로 병합(Encoding). (🏗️ Planned)
 
-## 3. ✅ 현재 구현된 기능 (Feature List)
+### B. Ant Client (Worker Node)
 
-### 3.1. 사용자 및 조직 관리 (RBAC)
-- **법인격(Organization):** 프로젝트 소유 및 결제 주체.
-- **프로젝트(Project):** 격리된 작업 공간 및 폴더 구조.
-- **멤버십:** 권한(ADMIN, MEMBER) 기반의 팀원 초대 및 관리.
-
-### 3.2. 가상화 서비스 (Virtualization)
-- **VM lifecycle API:** 가상머신(VMI) 생성, 삭제, 리스트 조회 구현.
-- **Stub 전략:** 로컬 커널 제약을 해결하기 위한 VNC Container 기반의 High-fidelity Stub 도입.
-- **원격 접속:** Guacamole 스택을 통해 별도 소프트웨어 설치 없이 브라우저에서 VM 제어.
-
-### 3.3. 비즈니스 로직 (Billing & Metering)
-- **복합 과금:** 하드웨어(CPU/GPU) 요율 + AI 모델 라이선스 요율 합산.
-- **세션 분할:** 사용 중 AI 모델 스위칭 시 요금 구간을 자동으로 정산 및 분리.
-- **상품 카탈로그:** `VMFlavor` 및 `AIModel` 테이블을 통한 유연한 가격 관리.
-
-### 3.4. 시스템 인텔리전스 (Observability)
-- **CCTV 모듈:** 파일 변경 감지 및 자동 문서화 연동.
-- **System Collector:** 실시간 DB 스키마 및 API 엔드포인트 자동 추출 및 마크다운 생성.
-
-### 3.5. 보안 및 격리 (Security & Isolation) ✨ NEW
-- **환경 격리:** 설정 파일(`src/config.py`)을 기준으로 모든 경로를 동적으로 계산하여 배포 유연성 확보.
-- **Bcrypt 해싱:** 사용자 비밀번호 암호화 저장 및 검증.
-- **JWT 인증:** 토큰 기반 stateless 인증 시스템 구현.
-- **Path Traversal 방어:** 파일 시스템 접근 시 상위 디렉토리 탈출 공격 차단.
-
-### 3.6. 관리자 대시보드 (Super Admin Console) ✨ NEW
-- **계층 구조 관리:** Cluster → Organization → Project 3단계 계층 시각화.
-- **리소스 할당:** Top-Down 방식의 프로젝트 배포 및 Bottom-Up 방식의 조직 승인.
-- **프리미엄 UI/UX:** 
-  - Glassmorphism 디자인 시스템
-  - 실시간 상태 토스트 알림
-  - 트리 구조 시각화 (계층 라인)
-  - 반응형 카드 레이아웃
-- **주요 기능:**
-  - 클러스터 생성 및 관리
-  - 조직 승인 및 쿼타 할당
-  - 프로젝트 Top-Down 배포
-  - 실시간 계층 구조 조회
+* **역할:** 실제 연산(생성/렌더링) 및 저장소 제공.
+* **주요 모듈:**
+    * **[Core 1] Generator (AI):** LLM 기반 데이터 생성. (✅ Implemented - Mock)
+    * **[Core 2] Shredder (Vault):** 데이터 암호화 및 조각 분할. (🏗️ Planned)
+    * **[Core 3] Renderer (Graphic):** **(New)** 할당받은 프레임에 대한 3D 렌더링 수행 (Blender/Maya/Unreal Engine 엔진 연동). (🏗️ Planned)
+    * **[Core 4] P2P Syncer:** **(New)** 렌더링에 필요한 대용량 자산을 인접 노드로부터 고속 다운로드. (🏗️ Planned)
 
 ---
 
-## 4. 📊 개발 진행율 (Progress)
+## 3. 핵심 기술 명세 (Core Technology Stack)
 
-| Phase | 단계 | 상태 | 달성률 |
-| :--- | :--- | :--- | :--- |
-| **Phase 1** | 인프라 기초 (Postgres/Docker) | ✅ Complete | 100% |
-| **Phase 2** | 가상화 코어 (KubeVirt/Guacamole) | ✅ Complete | 100% |
-| **Phase 3** | 과금 및 미터링 API | ✅ Complete | 100% |
-| **Phase 4** | 보안 및 환경 격리 | ✅ Complete | 100% |
-| **Phase 5** | 관리자 도구 및 결제 연동 | [/] In-Progress | 65% |
-| **Phase 6** | 글로벌 클라우드 확장 | 🏗️ Future | 0% |
+### ① DeepVault: 보안 저장 매커니즘
+> **Logic:** `Generate` -> `Encrypt` -> `Split (Erasure Coding)` -> `Distribute`
+* **Zero Trust Encryption:** `AES-256` 암호화 적용. (✅ Implemented)
+* **Erasure Coding (Reed-Solomon):** 개의 데이터 조각 + 개의 패리티 조각 생성. 노드 이탈 시에도 100% 복구 보장.
 
-**전체 진행률: 약 77% (보안 강화 및 관리자 UI 완료)**
+### ② DeepSync: 분산 생성 매커니즘
+> **Logic:** `Fetch Raw Data` -> `LLM Generation` -> `Quality Check`
+* **Synthetic Data Engine:** PC방(High-Spec) 및 가정용(Low-Spec) 이원화 운영.
+* **Cross-Validation:** 동일 작업을 3개 노드에 중복 할당하여 결과값 교차 검증.
 
----
-
-## 5. 🚨 향후 계획 (Roadmap 2026)
-
-### 🛡️ Phase 4: 보안 패치 ✅ COMPLETED
-1. **✅ 환경 격리 (Isolation):** 하드코딩된 절대 경로 제거 및 설정 중앙화.
-2. **✅ Bcrypt 해싱:** 사용자 비밀번호 평문 저장 방식 폐기 및 암호화 적용.
-3. **✅ JWT 미들웨어:** 전역 라우트에 대한 인증 필터 및 토큰 수명 관리.
-4. **✅ Path Traversal 방어:** 파일 시스템 접근 시 상위 폴더 접근(Directory Traversal) 방지 로직 보강.
-
-### 💼 Phase 5: 관리자 도구 및 결제 (In-Progress - 65%)
-#### 완료된 작업:
-1. **✅ 계층 구조 설계:** Cluster-Organization-Project 3단계 모델 구축.
-2. **✅ Super Admin Dashboard UI:** 
-   - 프리미엄 디자인 시스템 (Glassmorphism)
-   - 실시간 계층 구조 시각화
-   - 상태 토스트 알림 시스템
-3. **✅ 핵심 API 구현:**
-   - `/api/admin/hierarchy` - 계층 구조 조회
-   - `/api/admin/clusters` - 클러스터 생성
-   - `/api/admin/organizations/approve` - 조직 승인
-   - `/api/admin/projects/expand` - Top-Down 프로젝트 배포
-
-#### 진행 중인 작업:
-1. **[/] 삭제 기능:** 클러스터 및 프로젝트 삭제 API 및 UI 구현.
-2. **[/] Project Admin Dashboard:** 브랜드/팀 관리자용 대시보드 개발.
-
-#### 남은 작업:
-1. **[ ] Toss Payments 연동:** 
-   - Sandbox 환경 테스트
-   - 결제 승인 및 취소 로직
-   - 크레딧 충전 시스템
-2. **[ ] Billing UI:** 
-   - 사용자 실시간 요금 확인 대시보드
-   - 월별/프로젝트별 사용 내역
-3. **[ ] Usage Watchdog:** 
-   - 예산 초과 시 자동 리소스 회수
-   - 알림 및 경고 시스템
-
-### 🚀 Phase 6: 상용 서비스 런칭 (Future)
-1. **Production KubeVirt:** Stub 제거 및 베어메탈 노드 기반의 실제 VM 서비스 시작.
-2. **Multi-Region Support:** 서울, 도쿄, 싱가포르 등 글로벌 리전 확장.
-3. **OpenAPI Docs:** 외부 파트너사를 위한 API 명세서 고도화.
-4. **Monitoring & Alerting:** Prometheus + Grafana 통합.
-5. **Auto-Scaling:** 트래픽 기반 자동 스케일링 정책.
+### ③ DeepRender: 분산 렌더링 파이프라인 (신규 추가)
+> **Logic:** `Slice` -> `P2P Asset Sync` -> `Parallel Render` -> `Stitch`
+* **Frame Slicing (The Slicer):**
+    * 1TB 규모의 렌더링 요청을 **1 프레임 단위(1/60초)**의 초소형 작업으로 분해.
+    * 예: 1시간 영상 → 216,000개의 개별 Task로 변환하여 21만 개의 노드에 동시 할당 가능.
+* **Smart Asset Distribution (P2P Protocol):**
+    * 수십 GB에 달하는 프로젝트 원본(Assets)을 중앙 서버에서 모두 전송하지 않음.
+    * **BitTorrent 프로토콜**을 응용하여, 데이터를 먼저 받은 PC방 노드(Seeder)가 인접 노드(Leecher)에게 고속으로 전파. (LAN 환경 활용 극대화).
+* **Redundant Rendering (중복 할당):**
+    * 개미의 이탈(Log-off)에 대비하여, 동일한 프레임을 2개 이상의 노드에 동시 할당.
+    * 가장 먼저 완료된 결과물만 채택하고 나머지는 Kill(중단) 처리하여 지연 시간(Latency) 최소화.
+* **Secure Frame Rendering:**
+    * 작업자는 전체 스토리나 맥락을 알 수 없는 '단일 프레임'만 처리하므로, 출시 전 영화 등의 콘텐츠 유출 원천 차단.
 
 ---
 
-## 6. 📋 즉시 착수 가능한 작업 목록 (Next Actions)
+## 4. 단계별 개발 로드맵 (Phased Roadmap)
 
-### 우선순위 1 (High Priority)
-- [ ] 클러스터 삭제 API 구현 (`DELETE /api/admin/clusters/{id}`)
-- [ ] 프로젝트 삭제 API 구현 (`DELETE /api/admin/projects/{id}`)
-- [ ] Admin Dashboard에 삭제 버튼 UI 추가
-- [ ] Project Admin Dashboard 기본 레이아웃 설계
+### Phase 1: MVP - "기반 기술 검증" (Today)
+**목표:** AI 데이터 생성 및 렌더링 기초 로직 구현.
+1. **Profit Simulator:** GPU 전력 대비 AI/렌더링 수익성 시뮬레이터 개발. (✅ Done)
+2. **Generator (AI):** 뉴스 기반 Q&A 생성기 구현. (✅ Implemented as Mock)
+3. **Mini-Renderer:** **(New)** 오픈소스 Blender를 활용하여 특정 프레임 1장을 렌더링하는 커맨드라인 도구 연동 테스트. (🏗️ Todo)
 
-### 우선순위 2 (Medium Priority)
-- [ ] Toss Payments Sandbox 계정 생성 및 테스트
-- [ ] 결제 승인 API 엔드포인트 구현
-- [ ] 사용자 크레딧 잔액 관리 시스템
-- [ ] Billing Dashboard 프로토타입 제작
+### Phase 2: Network - "연결과 배포" (Next Month)
+**목표:** 대용량 파일의 효율적 전송 및 통신 프로토콜 완성.
+1. **DeepVault Core:** 파일 분할/복구(Sharding) 로직 구현.
+2. **P2P Asset Sync:** **(New)** `Libtorrent` 라이브러리를 활용한 자산 파일 공유 프로토타입 개발.
+3. **Task Dispatcher:** AI 생성 작업과 렌더링 작업을 구분하여 할당하는 스케줄러 개발. (✅ Core Done, Needs Expansion)
 
-### 우선순위 3 (Low Priority)
-- [ ] Usage Watchdog 알고리즘 설계
-- [ ] 예산 초과 알림 이메일 템플릿
-- [ ] OpenAPI 스펙 자동 생성 스크립트
-- [ ] E2E 테스트 자동화 (Playwright)
-
----
-
-## 7. 🎓 학습 및 개선 사항 (Lessons Learned)
-
-### 기술적 성과:
-- **하이드레이션 이슈 해결:** Next.js SSR 환경에서 브라우저 확장 프로그램으로 인한 속성 불일치 문제를 `suppressHydrationWarning`과 `mounted` 체크로 해결.
-- **상태 관리 최적화:** `window.prompt`/`alert` 대신 내부 상태 기반 토스트 시스템으로 전환하여 브라우저 차단 우회.
-- **API 설계 패턴:** Top-Down(Super Admin) vs Bottom-Up(Project Admin) 권한 분리 전략 확립.
-
-### 개선 필요 사항:
-- **접근성(A11y):** `aria-label`, `role` 속성 추가 필요.
-- **테스트 자동화:** `data-testid` 속성을 통한 E2E 테스트 커버리지 확대.
-- **에러 핸들링:** 사용자 친화적인 에러 메시지 및 복구 플로우 강화.
+### Phase 3: Platform - "통합 및 상용화" (Future)
+**목표:** 검증 시스템 및 대시보드 오픈.
+1. **Verifier System:** 결과물 품질 자동 검수 및 중복 제거.
+2. **Stitching Server:** **(New)** 렌더링된 이미지를 영상(`mp4`, `mov`)으로 합치는 인코딩 서버 구축.
+3. **Web Dashboard:** 사용자 기여도(포인트) 확인 및 렌더링 진행률 모니터링. (✅ Basic Dashboard Done)
 
 ---
 
-*Generated by Monewment AI Architect (Pro Context Active)*
-*Last Major Update: Phase 5 Admin Dashboard Completion*
+## 5. 안티그래비티 작업 지시서 (Ready to Dev)
+
+DeepRender(렌더링) 모듈이 포함된 **확장된 디렉토리 구조**입니다.
+
+```text
+DeepSync_Project/
+│
+├── queen_server/            # [서버] 중앙 통제실
+│   ├── main.py              # FastAPI 진입점 (✅ Done)
+│   ├── task_dispatcher.py   # 일감 배분 (AI/Render 구분) (✅ Basic Done)
+│   ├── map_manager.py       # DeepVault 위치 기록 (🏗️ Todo)
+│   ├── asset_tracker.py     # [Render] 자산 배포 현황 추적 (🏗️ Todo)
+│   └── stitcher.py          # [Render] 결과물 병합 (FFmpeg 연동) (🏗️ Todo)
+│
+├── ant_client/              # [클라이언트] 사용자 PC용
+│   ├── core_generator.py    # [DeepSync] AI 데이터 생성 (✅ Mock Optimized)
+│   ├── core_vault.py        # [DeepVault] 암호화 및 샤딩 (🏗️ Todo)
+│   ├── core_renderer.py     # [Render] 블렌더/엔진 연동 렌더링 (🏗️ Todo)
+│   ├── p2p_syncer.py        # [Render] 자산 P2P 다운로드 (🏗️ Todo)
+│   └── stealth_sensor.py    # 유휴 상태 감지 (✅ Watchdog Done)
+│
+├── common/                  # 공통 모듈
+│   ├── crypto_utils.py      # AES-256 암호화 (✅ Done)
+│   └── erasure_coding.py    # 데이터 분할/복구 (🏗️ Todo)
+│
+└── simulator/               # 수익성 분석기
+    └── profit_calc.py       # [0단계] AI 및 렌더링 수익 계산 (✅ ProfitEngine Done)
+```
 
 ---
 
-## 📌 Session Update (2026-01-07 01:35:52)
+## 6. Phase 10: Client GUI Dashboard Implementation (Completed)
+> **Execution Period:** 2026-01-07  
+> **Status:** ✅ Fully Implemented and Verified
 
-**Session Summary:** Phase 5 완료: Super Admin Dashboard, 문서화 시스템 v4.1, Git 안정화
+본 단계에서는 실험적인 Python 3.14 환경에서의 호환성 문제(Binder Issue)를 극복하고, 상용 수준의 Native Client 경험을 제공하는 **GUI Dashboard**를 완성했습니다.
 
-**Activity:**
-- Commits: 16
-- Task Progress: 83.3%
+### A. Architectural Pivot: Edge App Mode
+*   **Challenge**: 최신 Python 3.14와 `pythonnet`/`pywebview` 간의 C-Binding 호환성 문제로 인해 기존 방식의 웹뷰 구동 불가.
+*   **Solution**: **Microsoft Edge App Mode** (`msedge.exe --app=...`)를 활용한 "Hybrid Native" 아키텍처 채택.
+    *   **Frameless UI**: 주소창/탭 없는 깔끔한 독립 실행 창 제공.
+    *   **Stability**: 브라우저 기반이므로 Python 런타임 충돌 원천 배제.
+    *   **Optimization**: 기본 해상도 `1280x800`, 시작 시 자동 최대화(`--start-maximized`) 적용.
 
-**Recent Changes:**
-- feat: Add session end automation script
-- 📝 Auto-update documentation [skip ci]
-- fix: Remove stray backticks from ci.yml
-- fix: Update GitHub Actions with retry logic and pull-rebase
-- 📝 Auto-update documentation [skip ci]
+### B. Core Features Implemented
+1.  **Network-Based Token Sync (Zero-IPC)**
+    *   기존 로컬 IPC 방식을 대체하여, **Web Frontend -> Queen Server -> Python Worker** 흐름의 네트워크 동기화 구현.
+    *   로그인 시 Queen이 Redis에 토큰을 캐싱하고, 소켓으로 연결된 Worker에게 즉시 푸시(`token_sync`)하여 보안성 및 연동성 강화.
 
+2.  **Silent Auto-Login (Persistence)**
+    *   **Cloud Persistence**: 사용자 토큰을 Queen의 Redis(`ant:token:{client_id}`)에 저장.
+    *   **Silent Start**: 클라이언트 재실행 시 로그인 화면 없이 즉시 Tray 모드로 진입 및 백그라운드 채굴 시작.
+    *   **Local UX**: 브라우저 `localStorage`를 활용하여 이메일 기억하기("Save ID") 기능 구현.
+
+3.  **Responsive UI Implementation**
+    *   **Hybrid Layout**: 데스크톱(Split View) 및 모바일/태블릿(Single Column Stack) 자동 전환.
+    *   **Safe Scrolling**: 작은 창에서도 로그인 폼이 잘리지 않도록 동적 스크롤 적용.
+    *   **Draggable Region**: CSS `-webkit-app-region: drag`를 사용하여 네이티브 앱처럼 창 이동 가능.
+
+### C. Critical Fixes & Stability Hardening
+1.  **Database Connection**:
+    *   Docker 컨테이너 포트 `5433`과 로컬 환경 설정 `5432` 불일치 해결.
+    *   `.env` 및 Uvicorn 설정을 `5433`으로 표준화.
+2.  **IPv6 Networking Conflict**:
+    *   Windows의 `localhost`가 IPv6(`::1`)로 우선 해석되어 백엔드 연결이 끊키는 현상 발견.
+    *   Frontend API 호출을 `http://127.0.0.1:8000` (IPv4)로 강제하여 연결 신뢰성 100% 확보.
+3.  **Error Handling**:
+    *   단순 "Server Error" 알림을 **"상세 디버그 메시지(Stack Trace)"** 출력으로 개선하여 사용자 경험/유지보수성 향상.
 
 ---

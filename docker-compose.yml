@@ -15,6 +15,16 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # 1.5. Message Broker (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: monewment-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
   # 2. Backend API (FastAPI)
   backend:
     build:
@@ -28,8 +38,10 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://user:monewment1234@db:5432/monewment
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       - db
+      - redis
     volumes:
       - ./src:/app/src
       # Mount source for hot reload (if we add --reload to command in Dockerfile later)
@@ -53,3 +65,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:

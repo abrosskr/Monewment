@@ -4,12 +4,14 @@ from typing import Optional
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from pathlib import Path
 
 from src.config import settings
-from src.database import SessionLocal
-from src.models import User
 from src.dependencies import get_db
+from src.models import User
 
 # OAuth2 스킴 설정 (FastAPI 자동 문서화 및 클라이언트 연동용)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
@@ -42,7 +44,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
     """요청 헤더의 JWT 토큰을 검증하고 현재 사용자 정보를 반환합니다."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,7 +59,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except JWTError:
         raise credentials_exception
         
-    user = db.query(User).filter(User.email == email).first()
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalars().first()
+    
     if user is None:
         raise credentials_exception
     return user
@@ -85,3 +89,35 @@ def validate_project_path(project_name: str) -> Path:
         )
 
     return target_path
+
+# [API-First] API Key Authentication
+from fastapi import Security
+from fastapi.security.api_key import APIKeyHeader
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+async def get_api_key_user(
+    api_key_header: str = Security(api_key_header),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Validates the X-API-Key header and returns the associated User.
+    Used for B2B API endpoints.
+    """
+    if not api_key_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing API Key"
+        )
+    
+    # Simple query for now (Should be cached in Redis in production)
+    result = await db.execute(select(User).where(User.api_key == api_key_header))
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid API Key"
+        )
+        
+    return user

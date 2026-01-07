@@ -1,6 +1,8 @@
 # --- Web Framework ---
 fastapi
 uvicorn[standard]
+redis
+structlog
 
 # --- Environment & Settings ---
 pydantic
@@ -16,6 +18,11 @@ python-json-logger
 
 # --- Vendors Heritage (Automation & Dev Tools) ---
 pytest
+pytest-asyncio
+httpx
+cryptography
+websockets
+arq
 black
 requests
 kubernetes
