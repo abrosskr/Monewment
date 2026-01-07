@@ -48,7 +48,8 @@ jobs:
         python scripts/generate_docs_v4.py
 
     - name: Commit and Push Docs
-      # 변경사항이 있을 때만 커밋을 진행합니다. [skip ci]로 무한 루프 방지
+      # 문서 자동 업데이트는 'main' 브랜치에서만 수행하여, 개발 중인 feature 브랜치와의 충돌을 방지합니다.
+      if: github.ref == 'refs/heads/main'
       run: |
         git config --global user.name 'Monewment-Bot'
         git config --global user.email 'bot@monewment.ai'
