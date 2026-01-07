@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     POSTGRES_PORT: int = 5432
 
+    REDIS_URL: str = "redis://localhost:6379/0"
+
     GEMINI_API_KEY: str
     CLAUDE_API_KEY: Optional[str] = None
 
