@@ -20,6 +20,21 @@ jobs:
   build-and-doc:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: monewment_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -44,7 +59,17 @@ jobs:
     - name: 📝 Auto-Generate Documents
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        # Config Pydantic Validation Bypass (Dummy Values)
+        SECRET_KEY: "ci-secret-key"
+        POSTGRES_SERVER: "localhost"
+        POSTGRES_USER: "postgres"
+        POSTGRES_PASSWORD: "password"
+        POSTGRES_DB: "monewment_db"
+        POSTGRES_PORT: "5432"
+        BLENDER_PATH: "blender" # Mock path
       run: |
+        # Wait for DB
+        sleep 5
         python scripts/generate_docs_v4.py
 
     - name: 📤 Upload Docs as Artifact (Preview)
