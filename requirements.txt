@@ -26,3 +26,9 @@ arq
 black
 requests
 kubernetes
+
+# --- Security & Auth (Missing Dependencies Fixed) ---
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+bcrypt
