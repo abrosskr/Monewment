@@ -97,15 +97,21 @@ def main():
     
     print(f"✅ 성공: {success_count}/{total_count}")
     
+    has_error = False
     for doc_type, result in results.items():
         if 'error' in result:
             print(f"  ❌ {doc_type}: {result['error']}")
+            has_error = True
         else:
             print(f"  ✅ {doc_type}: {result.get('file', 'N/A')}")
     
     print("\n🎉 모든 문서 생성 작업 완료!")
     print("=" * 80)
     
+    if has_error:
+        print("⚠️ 일부 문서 생성 실패로 인해 프로세스를 비정상 종료합니다.")
+        sys.exit(1)
+        
     return results
 
 if __name__ == "__main__":
