@@ -2,14 +2,19 @@
 import React from "react";
 import YbSidebar from "@/components/YbSidebar";
 import { useLayoutContext } from "./LayoutProvider";
+import { usePathname } from "next/navigation";
 
 export default function MasterLayout({ children }: { children: React.ReactNode }) {
     const { isClientMode } = useLayoutContext();
+    const pathname = usePathname();
 
-    if (isClientMode) {
+    // PixelGrid 경로나 클라이언트 모드에서는 사이드바를 숨김
+    const isPixelGrid = pathname?.startsWith("/pixelgrid");
+
+    if (isClientMode || isPixelGrid) {
         return (
-            <div className="flex h-screen w-screen bg-[#0f172a]">
-                <main className="flex-1 h-full overflow-hidden relative">
+            <div className="flex h-screen w-screen bg-[#0A0A0A]">
+                <main className="flex-1 h-full overflow-y-auto relative">
                     {children}
                 </main>
             </div>

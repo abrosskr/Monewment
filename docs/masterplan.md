@@ -229,3 +229,101 @@ DeepSync_Project/
     *   **Transaction**: `Check` -> `Download` -> `Verify(Hash)` -> `Backup` -> `Swap`.
     *   **Rollback**: 부팅 실패 또는 Swap 오류 시 즉시 백업본(`v1.0.bak`)으로 자동 복구.
 
+
+## 10. CI/CD & Git Synchronization Protocol (Stability Hardening)
+> **Status:** ✅ Protocol Established and Hardened (2026-01-08)
+
+개발 환경과 배포(CI) 환경 간의 격차를 해소하고, "가짜 초록불(Silent Failure)"을 원천 차단하기 위한 기술 규격입니다.
+
+### A. CI Core Infrastructure (GitHub Actions Req.)
+*   **Mandatory Services**: 
+    *   `PostgreSQL`: 데이터베이스 스키마 문서 생성을 위한 정적 메타데이터 소스로 사용.
+    *   `Redis`: FastAPI 앱 초기화 시 소켓 및 캐시 매니저 연결을 위해 필수.
+*   **Environment Variables**: CI 단계에서 `Settings` 클래스 로딩 실패를 막기 위해 Dummy 변수(`SECRET_KEY`, `POSTGRES_*`, `REDIS_URL`) 주입 필수.
+
+### B. Dependency Integrity Control
+*   **Requirements Standard**: `src/` 모듈(특히 `security.py`)에서 임포트하는 모든 라이브러리(`passlib`, `python-jose`, `bcrypt` 등)는 반드시 `requirements.txt`에 명시되어야 함.
+*   **Strict Exit Code**: 자동화 스크립트(`generate_docs_v4.py` 등)는 내부 에러 발생 시 반드시 `sys.exit(1)`을 호출하여 CI 파이프라인을 중단시켜야 함.
+
+### C. Git Synchronization & Hygiene
+*   **Pycache Lock**: `__pycache__` 파이썬 컴파일 파일이 Git 인덱스에 포함되지 않도록 `.gitignore` 최신화 및 추적 강제 제거.
+*   **Bot Conflict Resolution**: CI Bot의 자동 커밋과 로컬 작업이 충돌할 경우, `git pull --rebase`를 통한 선형 히스토리 관리를 표준으로 채택.
+*   **Commit Tagging**: `[skip ci]` 태그를 활용하여 자동 생성 커밋으로 인한 무한 루프 방지.
+
+
+---
+**[End of Hardening Phase]**  
+Next Target: **Phase 14 (Profit & Scale - Real-time Dashboard & Smart Scheduler)**
+
+---
+
+## 11. PixelGrid Phase 4: Advanced Cell Controls & Media Support (Completed)
+> **Execution Period:** 2026-01-08  
+> **Status:** ✅ Fully Implemented and Verified
+
+본 단계에서는 PixelGrid Editor의 기능을 대폭 확장하여 셀 크기 조정, ID 관리, 아웃라인 제어, 이미지 삽입 기능을 추가했습니다.
+
+### A. 구현된 핵심 기능 (4가지)
+
+1. **Cell Size Control (셀 크기 조정)**
+   - `GridCell` 인터페이스에 `width`, `height` 필드 추가 (기본값: 80px)
+   - Selection Editor에 Width/Height 입력 필드 추가
+   - 셀별로 픽셀 단위 크기 제어 가능
+
+2. **Cell ID Management (셀 ID 관리)**
+   - 병합 시 자동 ID 생성: `m-{r}-{c}` 형식 (예: `m-2-3`)
+   - Selection Editor에 Cell ID 입력 필드 추가
+   - 사용자 정의 ID 수정 가능 (예: "header-logo", "nav-menu")
+   - 프롬프트 생성 시 JSON 및 JSX에 ID 포함
+
+3. **Outline Control (아웃라인 제어)**
+   - Outline 데이터 구조: `enabled`, `width` (1-10px), `color`, `style` (solid/dashed/dotted)
+   - Selection Editor에 Outline 섹션 추가 (ON/OFF 토글, Width 슬라이더, Color picker, Style 선택)
+   - 셀별로 독립적인 테두리 스타일 적용 가능
+
+4. **Image Support (이미지 삽입)**
+   - Component Type에 'image' 추가
+   - `imageUrl`, `imageAlt`, `imageFit` (cover/contain/fill) 필드 추가
+   - Selection Editor에 Image Settings 섹션 추가 (URL 입력, Alt Text, Object Fit 선택)
+   - 실제 이미지 렌더링 및 프롬프트 출력 지원
+
+### B. UI/UX 개선
+
+1. **Selection Editor 재구성**
+   - 총 12개 섹션으로 확장: Cell ID, Component Type, Content, Dimensions, Font Settings, Color Palette, Outline, Image Settings, Global Padding, Content Alignment
+   - Weight 버튼 스타일을 Component Type과 통일 (노란색 활성화)
+
+2. **병합 셀 렌더링 수정**
+   - 병합된 셀이 전체 영역을 차지하는 큰 박스로 확장되도록 수정
+   - `gridRow`/`gridColumn` 단축 속성 사용 (`3 / 5` 형식)
+   - 병합된 셀에는 `width: 100%; height: 100%` 적용하여 그리드 영역을 완전히 채움
+   - 시작 셀을 제외한 나머지 병합된 셀들은 완전히 숨김 처리
+
+### C. 기술적 변경 사항
+
+**수정된 파일:**
+- `gui/app/pixelgrid/editor/page.tsx`
+
+**주요 변경 내용:**
+1. GridCell 인터페이스 확장 (14개 새 필드)
+2. editState 확장 (11개 새 필드)
+3. updateEditStateFromCell 함수 업데이트
+4. applyStyle 함수 확장 (Phase 4 필드 적용)
+5. handleMerge 함수에 자동 ID 생성 로직 추가
+6. Selection Editor UI 대폭 개편
+7. renderComponent 함수에 'image' 타입 지원 추가
+8. 그리드 렌더링에 width, height, outline 적용
+9. generatePrompt 함수에 Phase 4 필드 포함
+
+### D. 검증 결과
+
+브라우저 테스트를 통해 모든 기능이 정상 작동함을 확인:
+- ✅ 병합 셀이 전체 영역을 차지하는 큰 박스로 확장
+- ✅ 병합된 셀 숨김 처리 (시작 셀만 표시)
+- ✅ ID 간소화 (`m-n-n` 형식)
+- ✅ Weight 스타일 통일 (노란색 활성화)
+- ✅ Outline, Image, Dimensions 컨트롤 정상 작동
+
+---
+**[End of PixelGrid Phase 4]**  
+Next Target: **PixelGrid Phase 5 (Advanced Features - Animation, Responsive Breakpoints, File Upload)**
