@@ -1,0 +1,6 @@
+VM Creation Failed: (500)
+Reason: Internal Server Error
+HTTP response headers: HTTPHeaderDict({'Audit-Id': '65144ce3-4ba1-44c0-913c-3296ef47f6df', 'Cache-Control': 'no-cache, private', 'Content-Type': 'application/json', 'X-Kubernetes-Pf-Flowschema-Uid': 'dba93d5a-252e-4c82-9b81-24e55c4f553e', 'X-Kubernetes-Pf-Prioritylevel-Uid': 'e28da58f-1f24-429a-901d-a5f95c22c664', 'Date': 'Sun, 11 Jan 2026 06:09:12 GMT', 'Content-Length': '845'})
+HTTP response body: {"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"Internal error occurred: failed calling webhook \"virtualmachineinstances-mutator.kubevirt.io\": failed to call webhook: Post \"https://virt-api.kubevirt.svc:443/virtualmachineinstances-mutate?timeout=10s\": tls: failed to verify certificate: x509: certificate has expired or is not yet valid: current time 2026-01-11T06:09:12Z is after 2026-01-07T10:55:39Z","reason":"InternalError","details":{"causes":[{"message":"failed calling webhook \"virtualmachineinstances-mutator.kubevirt.io\": failed to call webhook: Post \"https://virt-api.kubevirt.svc:443/virtualmachineinstances-mutate?timeout=10s\": tls: failed to verify certificate: x509: certificate has expired or is not yet valid: current time 2026-01-11T06:09:12Z is after 2026-01-07T10:55:39Z"}]},"code":500}
+
+

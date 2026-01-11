@@ -188,6 +188,10 @@ class ProjectSubscription(Base):
     # [Guardrails] Hard Cap (예산 한도, NULL이면 무제한)
     usage_limit_hard_cap = Column(Numeric(10, 2), nullable=True)
 
+    # [Hybrid Model] Auto-Scale Bursting Configuration
+    allow_burst = Column(Boolean, default=False) # If true, allows usage beyond monthly_credits
+    burst_multiplier = Column(Numeric(4, 2), default=1.5) # Overage surcharge multiplier (e.g. 1.5x)
+
     project = relationship("Project", backref="subscription")
     plan = relationship("SubscriptionPlan")
 
@@ -201,8 +205,30 @@ class ProjectBudget(Base):
     
     alert_threshold = Column(Numeric(10, 2), default=50.00) # 알림 기준 ($)
     current_month_spend = Column(Numeric(10, 2), default=0.00) # 현재 사용량 캐시
+    
+    # [Payment] 선불 충전 크레딧
+    prepaid_credits = Column(Numeric(10, 2), default=0.00) # 사용자가 추가 충전한 금액 (차감 우선순위 1위)
 
     project = relationship("Project", backref="budget")
+
+class PaymentHistory(Base):
+    """
+    [Payment] 결제 내역 (Audit Log)
+    """
+    __tablename__ = "payment_history"
+    id = Column(Integer, primary_key=True, index=True)
+    
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    transaction_id = Column(String, unique=True, index=True) # PG사 거래 ID (e.g. pi_3M9...)
+    amount = Column(Numeric(10, 2), nullable=False)
+    currency = Column(String, default="USD")
+    status = Column(String, default="SUCCESS") # SUCCESS, FAILED, PENDING
+    payment_method = Column(String, nullable=True) # card, bank, points
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    project = relationship("Project", backref="payments")
+
 
 class VMFlavor(Base):
     """
@@ -274,6 +300,8 @@ class VMUsage(Base):
     vm = relationship("VMInstance", backref="usage_history")
     ai_model = relationship("AIModel")
 
+
+
 # --- Phase 6: DeepVault Models ---
 
 class VaultFile(Base):
@@ -317,3 +345,110 @@ class VaultShard(Base):
     stored_at = Column(JSON, default=[]) 
     
     file = relationship("VaultFile", back_populates="shards")
+
+# --- Phase 11: Autonomous Deployment Models ---
+
+class DeploymentConfig(Base):
+    """
+    [Autonomous] 자동 배포 설정
+    - Git 저장소에서 자동으로 서비스를 빌드하고 배포합니다.
+    """
+    __tablename__ = "deployment_configs"
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), unique=True)
+    
+    # Git 설정
+    git_repo = Column(String, nullable=False)
+    git_branch = Column(String, default="main")
+    git_token_encrypted = Column(String, nullable=True)  # 암호화된 Git 토큰
+    
+    # 빌드 설정
+    dockerfile_path = Column(String, default="Dockerfile")
+    build_context = Column(String, default=".")
+    
+    # 배포 설정
+    port = Column(Integer, default=8080)
+    replicas = Column(Integer, default=1)
+    auto_deploy = Column(Boolean, default=False)  # Git push 시 자동 배포
+    
+    # 상태
+    status = Column(String, default="PENDING")  # PENDING, BUILDING, DEPLOYED, FAILED
+    last_deployed_at = Column(DateTime(timezone=True), nullable=True)
+    last_commit_sha = Column(String, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    project = relationship("Project", backref="deployment_config")
+    endpoints = relationship("ServiceEndpoint", back_populates="deployment")
+    env_vars = relationship("EnvironmentVariable", back_populates="deployment")
+    build_logs = relationship("BuildLog", back_populates="deployment")
+
+class ServiceEndpoint(Base):
+    """
+    [Autonomous] 서비스 엔드포인트 및 도메인 관리
+    - 자동으로 도메인과 SSL을 설정합니다.
+    """
+    __tablename__ = "service_endpoints"
+    id = Column(Integer, primary_key=True, index=True)
+    deployment_id = Column(Integer, ForeignKey("deployment_configs.id"))
+    
+    # 네트워크 설정
+    internal_port = Column(Integer, nullable=False)
+    external_port = Column(Integer, default=80)
+    protocol = Column(String, default="HTTP")  # HTTP, HTTPS, TCP
+    
+    # 도메인 설정
+    subdomain = Column(String, unique=True, nullable=False)  # project-name.monewment.io
+    custom_domain = Column(String, nullable=True)
+    ssl_enabled = Column(Boolean, default=True)
+    ssl_cert_id = Column(String, nullable=True)  # cert-manager certificate ID
+    
+    # 상태
+    status = Column(String, default="PENDING")  # PENDING, ACTIVE, ERROR
+    url = Column(String, nullable=True)  # https://project-name.monewment.io
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    deployment = relationship("DeploymentConfig", back_populates="endpoints")
+
+class EnvironmentVariable(Base):
+    """
+    [Autonomous] 환경 변수 보안 저장
+    - 환경 변수를 암호화하여 저장하고 Kubernetes Secret으로 주입합니다.
+    """
+    __tablename__ = "environment_variables"
+    id = Column(Integer, primary_key=True, index=True)
+    deployment_id = Column(Integer, ForeignKey("deployment_configs.id"))
+    
+    key = Column(String, nullable=False)
+    value_encrypted = Column(String, nullable=False)  # AES-GCM 암호화
+    is_secret = Column(Boolean, default=True)  # Secret vs ConfigMap
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    deployment = relationship("DeploymentConfig", back_populates="env_vars")
+
+class BuildLog(Base):
+    """
+    [Autonomous] 빌드 및 배포 로그
+    - Docker 빌드 및 Kubernetes 배포 로그를 저장합니다.
+    """
+    __tablename__ = "build_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    deployment_id = Column(Integer, ForeignKey("deployment_configs.id"))
+    
+    commit_sha = Column(String, nullable=True)
+    commit_message = Column(String, nullable=True)
+    status = Column(String, default="BUILDING")  # BUILDING, SUCCESS, FAILED
+    logs = Column(String)  # 빌드 로그 전체 (최대 10MB)
+    error_message = Column(String, nullable=True)
+    
+    # 빌드 정보
+    image_tag = Column(String, nullable=True)
+    build_duration_seconds = Column(Integer, nullable=True)
+    
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    deployment = relationship("DeploymentConfig", back_populates="build_logs")

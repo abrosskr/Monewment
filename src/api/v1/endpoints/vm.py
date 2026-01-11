@@ -9,11 +9,7 @@ from sqlalchemy.orm import selectinload
 from src.dependencies import get_db
 from src.models import VMInstance, VMFlavor, VMUsage, AIModel, Project
 
-# [Phase 3] K8s Client Import
-try:
-    from src.core.k8s_client import k8s
-except ImportError:
-    k8s = None
+# [Phase 3] K8s Client Import (Replaced by ClusterManager in Phase 4.6)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -98,6 +94,70 @@ async def create_vm(req: VMCreateRequest, db: AsyncSession = Depends(get_db)):
         ai_model = res_ai.scalars().first()
         if not ai_model:
             raise HTTPException(status_code=404, detail="AI Model not found")
+            
+    # 2. [Hybrid Model] Check Budget/Burst Eligibility
+    from src.models import ProjectBudget, ProjectSubscription
+    
+    # query subscription
+    res_sub = await db.execute(select(ProjectSubscription).where(ProjectSubscription.project_id == req.project_id).options(selectinload(ProjectSubscription.plan)))
+    sub = res_sub.scalars().first()
+    
+    if sub:
+        # Check Budget
+        res_budget = await db.execute(select(ProjectBudget).where(ProjectBudget.project_id == req.project_id))
+        budget = res_budget.scalars().first()
+        current_spend = float(budget.current_month_spend) if budget else 0.0
+        
+        # Hard Cap
+        if sub.usage_limit_hard_cap is not None:
+            if current_spend >= float(sub.usage_limit_hard_cap):
+                raise HTTPException(status_code=402, detail=f"Project Budget Exceeded (Hard Cap: ${sub.usage_limit_hard_cap})")
+        
+        # Burst Check
+        credits = float(sub.plan.monthly_credits) if sub.plan else 0.0
+        if current_spend >= credits:
+            if not sub.allow_burst:
+                raise HTTPException(status_code=402, detail="Credits Exhausted. Enable Burst Mode to continue.")
+            else:
+                logger.info(f"⚠️ Burst Mode Entry: VM {req.name} allowed via Overdraft.")
+    
+    # 3. Create VM Record
+            
+    # 2. [Hybrid Model] Check Budget/Burst Eligibility
+    # Need synchronous session for MeteringService? The service is written with sync session in mind (db.query).
+    # But here 'db' is AsyncSession. 
+    # We should refactor MeteringService to use 'select' (Async) OR instantiate it differently.
+    # Quick fix: Copy logic or make MeteringService async-compatible.
+    # Since MeteringService was written in Phase 4 as Sync, we should probably stick to Async patterns here in the endpoint
+    # to avoid blocking the loop.
+    
+    # We will implement the check logic directly here using Async patterns for performance and correctness in FastAPI async path.
+    from src.models import ProjectBudget, ProjectSubscription
+    
+    # query subscription
+    res_sub = await db.execute(select(ProjectSubscription).where(ProjectSubscription.project_id == req.project_id).options(selectinload(ProjectSubscription.plan)))
+    sub = res_sub.scalars().first()
+    
+    if sub:
+        # Check Budget
+        res_budget = await db.execute(select(ProjectBudget).where(ProjectBudget.project_id == req.project_id))
+        budget = res_budget.scalars().first()
+        current_spend = float(budget.current_month_spend) if budget else 0.0
+        
+        # Hard Cap
+        if sub.usage_limit_hard_cap is not None:
+            if current_spend >= float(sub.usage_limit_hard_cap):
+                raise HTTPException(status_code=402, detail=f"Project Budget Exceeded (Hard Cap: ${sub.usage_limit_hard_cap})")
+        
+        # Burst Check
+        credits = float(sub.plan.monthly_credits) if sub.plan else 0.0
+        if current_spend >= credits:
+            if not sub.allow_burst:
+                raise HTTPException(status_code=402, detail="Credits Exhausted. Enable Burst Mode to continue.")
+            else:
+                logger.info(f"⚠️ Burst Mode Entry: VM {req.name} allowed via Overdraft.")
+    
+    # 3. Create VM Record
 
     # 2. Check for Duplicates
     res_dup = await db.execute(select(VMInstance).where(VMInstance.name == req.name))
@@ -128,8 +188,24 @@ async def create_vm(req: VMCreateRequest, db: AsyncSession = Depends(get_db)):
 
     # 5. Launch Infrastructure (Stub or KubeVirt)
     try:
-        if k8s:
-            # Prod/Dev with KubeVirt
+        # [Phase 4.6] Multi-Cluster Dynamic Routing
+        # Fetch Project & Org Info to determine Cluster
+        from src.core.cluster_manager import ClusterManager
+        from src.models import Project
+        
+        # We need to reload project with organization info (optimization: could be done earlier)
+        res_proj = await db.execute(
+            select(Project).options(selectinload(Project.organization))
+            .where(Project.id == req.project_id)
+        )
+        project = res_proj.scalars().first()
+        
+        # Get appropriate K8s Client for this Project's Cluster
+        manager = ClusterManager.get_instance()
+        k8s_client = manager.get_client_by_project(project)
+        
+        if k8s_client:
+            # Prod/Dev with KubeVirt (Targeted Cluster)
             vmi_manifest = {
                 "apiVersion": "kubevirt.io/v1",
                 "kind": "VirtualMachineInstance",
@@ -142,7 +218,9 @@ async def create_vm(req: VMCreateRequest, db: AsyncSession = Depends(get_db)):
                     "volumes": [{"name": "containerdisk", "containerDisk": {"image": "quay.io/kubevirt/cirros-container-disk-demo"}}]
                 }
             }
-            k8s.custom_api.create_namespaced_custom_object("kubevirt.io", "v1", "default", "virtualmachineinstances", vmi_manifest)
+            # Use the specific client's custom_api
+            k8s_client.custom_api.create_namespaced_custom_object("kubevirt.io", "v1", "default", "virtualmachineinstances", vmi_manifest)
+            logger.info(f"Deployed VM {req.name} to Cluster ID: {project.organization.cluster_id if project and project.organization else 'Default'}")
         else:
             # Stub Mode (No KubeVirt Client or intentional Stub)
             logger.info("Running in STUB MODE: Skipping actual KubeVirt creation.")
@@ -192,9 +270,23 @@ async def delete_vm(name: str, db: AsyncSession = Depends(get_db)):
         await db.commit()
 
     # 2. Terminate Infra
-    if k8s:
+    # [Phase 4.6] Multi-Cluster Dynamic Routing
+    from src.core.cluster_manager import ClusterManager
+    
+    # Needs Project info to find cluster
+    # vm.project_id is available
+    res_proj = await db.execute(
+        select(Project).options(selectinload(Project.organization))
+        .where(Project.id == vm.project_id)
+    )
+    project = res_proj.scalars().first()
+    
+    manager = ClusterManager.get_instance()
+    k8s_client = manager.get_client_by_project(project)
+    
+    if k8s_client:
         try:
-            k8s.custom_api.delete_namespaced_custom_object("kubevirt.io", "v1", "default", "virtualmachineinstances", name)
+            k8s_client.custom_api.delete_namespaced_custom_object("kubevirt.io", "v1", "default", "virtualmachineinstances", name)
         except Exception as e:
             logger.warning(f"KubeVirt delete failed (might be stub): {e}")
 

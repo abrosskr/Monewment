@@ -327,3 +327,59 @@ Next Target: **Phase 14 (Profit & Scale - Real-time Dashboard & Smart Scheduler)
 ---
 **[End of PixelGrid Phase 4]**  
 Next Target: **PixelGrid Phase 5 (Advanced Features - Animation, Responsive Breakpoints, File Upload)**
+
+---
+
+## 12. Phase 4: Metering & Billing System (Integrated)
+> **Execution Period:** 2026-01-11
+> **Status:** ✅ Fully Implemented and Documented
+
+Monewment 프로젝트의 사용자 과금 및 리소스 미터링 시스템을 구축했습니다.
+
+### A. Core Billing Infrastructure
+1.  **Database Schema Expansion**:
+    *   `src/models.py`에 `SubscriptionPlan`, `ProjectSubscription`, `VMFlavor`, `AIModel`, `VMUsage` 등 7개 과금 관련 모델 통합.
+    *   `scripts/init_metering_db.py`: 초기 데이터(요금제, AI 모델 테이블) 시딩 끊김 없는 자동화.
+2.  **Metering Service Layer**:
+    *   `src/services/metering.py`: VM 세션 시작/종료 시점의 정밀한 시간 기록 및 요금 계산 로직 구현 (HW 요금 + SW 할증).
+
+### B. Live Usage Monitoring (CCTV)
+1.  **Zero-UI Dashboard**:
+    *   별도의 웹 프론트엔드 없이 `docs/LIVE_USAGE.md` 파일을 실시간 대시보드로 활용하는 창의적 모니터링 체계 구축.
+    *   `scripts/usage_cctv.py`: 백그라운드 프로세스로 실행되어 DB 변동사항을 감지하고 마크다운 대시보드를 2초마다 갱신.
+2.  **User Manual**:
+    *   `docs/user_guide/METERING_MANUAL.md`: 미터링 시스템 활용법을 상세히 기술한 한글 매뉴얼 제공.
+
+### C. Stability & Fixes
+1.  **Schema Migration**: `scripts/fix_db_schema.py`를 통해 `projects` 테이블에 누락된 `status` 컬럼을 라이브 마이그레이션으로 추가.
+2.  **Environment Stability**: Uvicorn 서버 구동에 필수적인 `slowapi` 의존성 누락 확인 및 설치 완료 (`ModuleNotFoundError` 해결).
+
+---
+**[End of Phase 4 Metering]**
+
+---
+
+## 13. Phase 5: Payment Gateway Integration & Burst Mode
+> **Execution Period:** 2026-01-11
+> **Status:** ✅ Fully Implemented and Verified
+
+미터링 시스템 위에 실제 결제 및 예산 제어 로직을 통합했습니다.
+
+### A. Hybrid Sizing Model ("Smart Hybrid")
+1.  **Burst Mode Authorization**:
+    *   `src/models.py`: `allow_burst` 플래그 추가 (DB Migration 완료).
+    *   **Logic**: `MeteringService`에서 프로젝트의 크레딧 잔액을 확인하고, 초과 시 `allow_burst`가 켜져 있으면 오버드래프트로 VM 생성을 허용.
+2.  **Safety Guardrails**:
+    *   `ProjectBudget.usage_limit_hard_cap`에 도달하면 즉시 리소스 생성을 차단하여 "요금 폭탄" 방지.
+
+### B. Payment System (Mock)
+1.  **Infrastructure**:
+    *   `payment_history` 테이블 신설 (감사 로그).
+    *   `ProjectBudget.prepaid_credits` 컬럼 추가 (충전금 관리).
+2.  **Billing API**:
+    *   `POST /api/v1/billing/charge`: Stripe 결제 시뮬레이션 및 예산 자동 충전.
+    *   `GET /api/v1/billing/balance/{id}`: 실시간 잔액 조회.
+
+---
+**[End of Phase 5 Payment]**
+Next Target: **Phase 6 (DeepVault & DeepRender Core Implementation)**

@@ -1,0 +1,98 @@
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T05:45:39.435080Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T05:45:39.653279Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T05:45:39.653893Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T05:45:39.666429Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-11T05:45:39.666880Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "POST", "request_id": "0b836839-bbb5-4f44-9c67-a37eeddeebe9", "path": "/api/auth/signup", "level": "info", "timestamp": "2026-01-11T05:45:52.293279Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "POST", "request_id": "fa2f60c4-36c6-4786-9431-835b58250ca5", "path": "/api/projects/create", "level": "info", "timestamp": "2026-01-11T05:45:54.347455Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "POST", "request_id": "7ed81b47-0ac9-4853-a6f6-0fca49f3a780", "path": "/api/auth/signup", "level": "info", "timestamp": "2026-01-11T05:48:14.935770Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "POST", "request_id": "6f894082-d06a-435b-ab2d-04e2fce7a8d3", "path": "/api/projects/create", "level": "info", "timestamp": "2026-01-11T05:48:16.983654Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "POST", "request_id": "13b9af9b-1ca5-4945-8c24-82e99c7f9575", "path": "/api/auth/signup", "level": "info", "timestamp": "2026-01-11T05:49:16.046319Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "POST", "request_id": "16ead0eb-3200-4ae1-9c73-5a305f5085b7", "path": "/api/projects/create", "level": "info", "timestamp": "2026-01-11T05:49:18.074719Z"}
+Running in STUB MODE: Skipping actual KubeVirt creation.
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "POST", "request_id": "253ca8bb-f1c4-40a0-86e5-d949e10cde72", "path": "/api/vm", "level": "info", "timestamp": "2026-01-11T05:49:20.660708Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "POST", "request_id": "092f972c-c0eb-4325-8e79-86a9b5068386", "path": "/api/vm/meter-vm-1768110558/switch_model", "level": "info", "timestamp": "2026-01-11T05:49:25.717126Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "method": "DELETE", "request_id": "b6d86148-cf96-4701-9e04-9c0c59982b1b", "path": "/api/vm/meter-vm-1768110558", "level": "info", "timestamp": "2026-01-11T05:49:30.756245Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T06:00:41.923250Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T06:00:41.983553Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T06:00:41.983908Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T06:00:41.991137Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-11T06:00:41.991498Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/auth/signup", "method": "POST", "client_ip": "127.0.0.1", "request_id": "bc98f142-2f54-4e5a-bba0-48b70af2b824", "level": "info", "timestamp": "2026-01-11T06:01:00.946853Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/projects/create", "method": "POST", "client_ip": "127.0.0.1", "request_id": "e71365b5-bc86-4e84-8bdf-574484e4255a", "level": "info", "timestamp": "2026-01-11T06:01:03.018466Z"}
+Running in STUB MODE: Skipping actual KubeVirt creation.
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/vm", "method": "POST", "client_ip": "127.0.0.1", "request_id": "83c1cf7c-593f-4274-8343-8c31a82ebf3c", "level": "info", "timestamp": "2026-01-11T06:01:05.558146Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/vm/meter-vm-1768111263/switch_model", "method": "POST", "client_ip": "127.0.0.1", "request_id": "d1db87f8-02e6-4e23-ba19-69c602e9a4f9", "level": "info", "timestamp": "2026-01-11T06:01:10.602804Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/vm/meter-vm-1768111263", "method": "DELETE", "client_ip": "127.0.0.1", "request_id": "fcd3e762-91da-4b38-882f-5d7322b7f838", "level": "info", "timestamp": "2026-01-11T06:01:15.646503Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T06:08:06.105142Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T06:08:06.167262Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T06:08:06.167702Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T06:08:06.174687Z"}
+Loaded local kubeconfig.
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T06:08:46.595001Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T06:08:46.666648Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T06:08:46.667004Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T06:08:46.674306Z"}
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-11T06:08:46.714206Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "request_id": "35fd0c64-7f20-450d-afe7-7a7e4cb3df42", "method": "POST", "path": "/api/auth/signup", "level": "info", "timestamp": "2026-01-11T06:09:08.383396Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "request_id": "7da53ffc-6a73-437c-9b92-959146d11474", "method": "POST", "path": "/api/projects/create", "level": "info", "timestamp": "2026-01-11T06:09:10.408802Z"}
+VM Creation Failed: (500)
+Reason: Internal Server Error
+HTTP response headers: HTTPHeaderDict({'Audit-Id': '65144ce3-4ba1-44c0-913c-3296ef47f6df', 'Cache-Control': 'no-cache, private', 'Content-Type': 'application/json', 'X-Kubernetes-Pf-Flowschema-Uid': 'dba93d5a-252e-4c82-9b81-24e55c4f553e', 'X-Kubernetes-Pf-Prioritylevel-Uid': 'e28da58f-1f24-429a-901d-a5f95c22c664', 'Date': 'Sun, 11 Jan 2026 06:09:12 GMT', 'Content-Length': '845'})
+HTTP response body: {"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"Internal error occurred: failed calling webhook \"virtualmachineinstances-mutator.kubevirt.io\": failed to call webhook: Post \"https://virt-api.kubevirt.svc:443/virtualmachineinstances-mutate?timeout=10s\": tls: failed to verify certificate: x509: certificate has expired or is not yet valid: current time 2026-01-11T06:09:12Z is after 2026-01-07T10:55:39Z","reason":"InternalError","details":{"causes":[{"message":"failed calling webhook \"virtualmachineinstances-mutator.kubevirt.io\": failed to call webhook: Post \"https://virt-api.kubevirt.svc:443/virtualmachineinstances-mutate?timeout=10s\": tls: failed to verify certificate: x509: certificate has expired or is not yet valid: current time 2026-01-11T06:09:12Z is after 2026-01-07T10:55:39Z"}]},"code":500}
+
+
+{"status_code": 500, "duration_ms": null, "event": "request_completed", "client_ip": "127.0.0.1", "request_id": "3089eff5-8915-4d71-83a3-860297722da2", "method": "POST", "path": "/api/vm", "level": "info", "timestamp": "2026-01-11T06:09:12.984472Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T06:13:12.487556Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T06:13:12.558683Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T06:13:12.559146Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T06:13:12.568011Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-11T06:13:13.139304Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-11T06:13:13.140537Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-11T06:13:13.141025Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-11T06:13:13.141279Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T06:15:37.025688Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T06:15:37.085249Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T06:15:37.085634Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T06:15:37.092623Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-11T06:15:37.662987Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T06:37:41.239877Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T06:37:41.300206Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T06:37:41.300607Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T06:37:41.307565Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T06:38:11.692987Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T06:38:11.756266Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T06:38:11.756693Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T06:38:11.763548Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-11T06:38:12.332384Z"}
+{"status_code": 404, "duration_ms": null, "event": "request_completed", "request_id": "40a91102-656b-41e5-b1d1-84f62a5fb179", "method": "POST", "path": "/api/v1/billing/charge", "client_ip": "127.0.0.1", "level": "info", "timestamp": "2026-01-11T06:38:35.079179Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-11T06:39:42.495996Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-11T06:39:42.561090Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-11T06:39:42.561490Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-11T06:39:42.568803Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-11T06:39:43.160225Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/v1/billing/charge", "client_ip": "127.0.0.1", "method": "POST", "request_id": "9c6c9a90-1626-4ca5-a9ab-736a0093630d", "level": "info", "timestamp": "2026-01-11T06:39:56.324950Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/v1/billing/balance/7", "client_ip": "127.0.0.1", "method": "GET", "request_id": "4b884cf1-4764-4cea-8e54-0086e4fb014f", "level": "info", "timestamp": "2026-01-11T06:39:58.353994Z"}

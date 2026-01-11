@@ -28,6 +28,16 @@ class PolicyResponse(BaseSchema):
     name: str
     rules: Dict[str, Any]
 
+# --- Project Schemas ---
+class ProjectCreate(BaseSchema):
+    name: str
+    description: Optional[str] = None
+
+class ProjectResponse(BaseSchema):
+    id: int
+    name: str
+    description: Optional[str]
+
 # --- Room Schemas ---
 class RoomCreate(BaseSchema):
     name: str
@@ -39,3 +49,17 @@ class RoomResponse(BaseSchema):
     status: RoomStatus
     k8s_namespace: Optional[str] = None
     policy: Optional[PolicyResponse] = None
+
+# [Phase 2] API 응답 표준화
+class APIResponse(BaseModel):
+    """표준 API 응답 형식"""
+    success: bool
+    message: str
+    data: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+
+class HealthCheckResponse(BaseModel):
+    """Health Check 응답 형식"""
+    status: str  # "healthy" or "unhealthy"
+    checks: Dict[str, bool]
+    timestamp: Optional[str] = None

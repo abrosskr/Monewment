@@ -6,10 +6,13 @@ import json
 import requests
 import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware 
 from pydantic import BaseModel 
 from datetime import datetime
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 # [모듈 임포트]
 from src.config import settings
 from src.database import engine
@@ -19,22 +22,20 @@ from sqlalchemy.orm import selectinload
 from src.models import Base, User, Organization, Project, VMInstance, VMFlavor, VMUsage, AIModel, Cluster
 from src.core.logger import setup_logger
 from src.core.redis_client import RedisManager
-from src.core.redis_client import RedisManager
 from src.core.protocol import JobRequest, JobResult, JobStatus, JobType
 from src.core.scheduler import Scheduler
 from src.core.ant_security import AntSecurity
+from src.middleware.request_id import RequestIDMiddleware
 # [수정] ui_factory 라우터 추가
 from src.routers import tools, ui_factory 
 from src.collector import collector
 from src.core.security import hash_password, verify_password, create_access_token, get_current_user, validate_project_path
+from prometheus_fastapi_instrumentator import Instrumentator
 
 logger = setup_logger()
-logger = setup_logger()
 running_processes = {}
-background_tasks = {} # To hold references to background tasks
-background_tasks = {} # To hold references to background tasks
+background_tasks = {}  # To hold references to background tasks
 # active_ant_sockets: dict[str, WebSocket] = {} # REPLACED by SocketManager
-scheduler = Scheduler()
 scheduler = Scheduler()
 
 async def background_task_saver():
@@ -52,11 +53,12 @@ async def background_task_saver():
             # Scan keys: ant:heartbeat:{client_id}
             # Note: In production with millions of keys, use SCAN iter. 
             # For 10k connections, keys() is acceptable but SCAN is safer.
-            keys = await redis.keys("ant:heartbeat:*")
-            if not keys: continue
+            # [Optimized] Use SCAN instead of KEYS to prevent blocking Redis
+            # keys = await redis.keys("ant:heartbeat:*")
             
             updates = {} # client_id -> timestamp (str)
-            for key in keys:
+            
+            async for key in redis.scan_iter("ant:heartbeat:*"):
                 ts = await redis.get(key)
                 if ts:
                     client_id = key.split(":")[-1] 
@@ -160,7 +162,8 @@ async def lifespan(app: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
         logger.info("✅ Database Tables Verified (Async Mode).")
     except Exception as e:
-        logger.error(f"❌ DB Init Error: {e}")
+        logger.critical(f"❌ DB Init Error: {e}")
+        raise RuntimeError("Database initialization failed. Cannot start application.") from e
 
     # [신규] 수집기에 앱 인스턴스 주입 (API 라우트 스캔을 위해 필수)
     collector.set_app(app)
@@ -168,6 +171,10 @@ async def lifespan(app: FastAPI):
 
     await RedisManager.get_instance().connect()
     logger.info("✅ Redis Connected.")
+    
+    # [Phase 4.6] Multi-Cluster Manager Init
+    from src.core.cluster_manager import ClusterManager
+    await ClusterManager.get_instance().initialize()
 
     # [신규] Write-Behind Task Start
     task = asyncio.create_task(background_task_saver())
@@ -194,24 +201,39 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Monewment Platform", version="4.8-UIFactory", lifespan=lifespan)
 
+# [Phase 2] Rate Limiting 설정
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 @app.get("/ping")
 async def ping():
     print("DEBUG: Ping Request Received")
     return {"status": "pong"}
 
+# CORS 설정: 환경 변수에서 허용 도메인 로드
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.ALLOWED_ORIGINS_LIST,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
+
+# [로깅 개선] 요청 추적 ID 미들웨어
+app.add_middleware(RequestIDMiddleware)
+
+# [모니터링] Prometheus 메트릭
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 # [라우터 등록]
 app.include_router(tools.router, prefix=settings.API_V1_STR)
 # [신규] UI Factory (자동 코딩 머신) API 등록
-app.include_router(ui_factory.router)
+app.include_router(ui_factory.router, prefix=f"{settings.API_V1_STR}/ui-factory", tags=["UI Factory"])
 
+# [Phase 11] Autonomous Deployment API
+from src.api.v1.endpoints import deploy
+app.include_router(deploy.router, prefix=f"{settings.API_V1_STR}/deploy", tags=["Autonomous Deploy"])
 # [Legacy DeepSync Endpoint Removed]
 # Functionality migrated to src/api/v1/sync/router.py
 
@@ -224,6 +246,10 @@ app.include_router(monitoring.router, prefix="/api/admin/ants", tags=["Admin Mon
 # [Phase 4] VM Management Router
 from src.api.v1.endpoints import vm
 app.include_router(vm.router, prefix="/api/vm", tags=["Virtual Machines"])
+
+# [Phase 5] Payment Gateway
+from src.api.v1.endpoints import billing
+app.include_router(billing.router, prefix="/api/v1/billing", tags=["Billing & Payment"])
 
 # [Phase 6-2] Modular B2B API Routers
 from src.api.v1.sync import router as sync_router
@@ -239,6 +265,53 @@ app.include_router(render_router.router, prefix="/api/v1/render", tags=["DeepRen
 def read_root():
     """시스템 헬스 체크 및 현재 가동 모드를 확인합니다."""
     return {"system": "Monewment Cluster", "status": "active", "mode": "B2B SaaS with UI Factory"}
+
+# [Phase 2] Health Check 엔드포인트
+@app.get("/health")
+async def health_check(db: AsyncSession = Depends(get_db)):
+    """
+    Kubernetes/Docker health check 엔드포인트
+    DB와 Redis 연결 상태를 확인합니다.
+    """
+    from src.schemas import HealthCheckResponse
+    
+    checks = {
+        "database": False,
+        "redis": False,
+    }
+    
+    # Database 체크
+    try:
+        await db.execute(select(1))
+        checks["database"] = True
+    except Exception as e:
+        logger.error(f"Health Check - DB Error: {e}")
+    
+    # Redis 체크
+    try:
+        redis = RedisManager.get_instance().get_client()
+        if redis:
+            await redis.ping()
+            checks["redis"] = True
+    except Exception as e:
+        logger.error(f"Health Check - Redis Error: {e}")
+    
+    # 모든 체크가 성공하면 200, 하나라도 실패하면 503
+    if all(checks.values()):
+        return HealthCheckResponse(
+            status="healthy",
+            checks=checks,
+            timestamp=str(datetime.now())
+        )
+    else:
+        raise HTTPException(
+            status_code=503,
+            detail=HealthCheckResponse(
+                status="unhealthy",
+                checks=checks,
+                timestamp=str(datetime.now())
+            ).dict()
+        )
 
 # =========================================================
 # [System Collector APIs] 시스템 정보 자동 수집
@@ -409,7 +482,8 @@ async def expand_project_topdown(req: ProjectExpandRequest, db: AsyncSession = D
 # [Scenario 4] 회원가입 및 로그인 (Auth)
 # =========================================================
 @app.post("/api/auth/signup")
-async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("3/minute")  # [Phase 2] Rate Limiting: 분당 3회
+async def signup(request: Request, req: SignupRequest, db: AsyncSession = Depends(get_db)):
     """새로운 사용자를 등록하고 OWNER 권한을 부여합니다."""
     result = await db.execute(select(User).where(User.email == req.email))
     existing_user = result.scalars().first()
@@ -425,7 +499,8 @@ async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
     return {"status": "success", "user_id": new_user.id, "message": "가입이 완료되었습니다."}
 
 @app.post("/api/auth/login")
-async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")  # [Phase 2] Rate Limiting: 분당 5회
+async def login(request: Request, req: LoginRequest, db: AsyncSession = Depends(get_db)):
     print(f"DEBUG: Login Request for {req.email}")
     """이메일과 비밀번호를 검증하고 액세스 권한을 부여합니다."""
     try:
@@ -477,45 +552,79 @@ async def create_project_saas(req: CreateProjectRequest, db: AsyncSession = Depe
         raise HTTPException(status_code=400, detail="이미 존재하는 프로젝트 폴더입니다.")
         
     try:
-        # 1. DB: 법인 확인/생성
+        # [Phase 3] 트랜잭션 개선: 파일 작업 먼저 수행
+        # 1. 템플릿 검증
+        if not os.path.exists(template_path):
+            raise HTTPException(status_code=500, detail="Standard 템플릿이 없습니다.")
+        
+        # 2. DB: 법인 확인/생성
         result = await db.execute(select(Organization).where(Organization.name == req.organization_name))
         org = result.scalars().first()
         
         if not org:
             org = Organization(name=req.organization_name, plan_type="free")
             db.add(org)
-            await db.commit()
-            await db.refresh(org)
+            await db.flush()  # ID 생성을 위해 flush (commit 아님)
             
-        # 2. DB: 프로젝트 생성
+        # 3. 프로젝트 객체 생성 (아직 커밋 안 함)
         new_project = Project(name=req.project_name, org_id=org.id, installed_features=["logs"])
         db.add(new_project)
-        await db.commit()
+        await db.flush()  # ID 생성
         
-        # 3. File: 템플릿 복사
-        if not os.path.exists(template_path):
-             raise HTTPException(status_code=500, detail="Standard 템플릿이 없습니다.")
-        shutil.copytree(template_path, target_path)
+        # 4. File: 템플릿 복사 (실패 가능성이 높은 작업)
+        try:
+            shutil.copytree(template_path, target_path)
+        except Exception as file_error:
+            # 파일 작업 실패 시 DB 롤백
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"파일 복사 실패: {str(file_error)}")
         
-        # 4. File: config.json 생성
-        config = {
-            "project_id": new_project.id,
-            "organization_id": org.id,
-            "owner_id": req.user_id,
-            "features": ["logs"],
-            "created_at": str(datetime.now())
-        }
-        with open(os.path.join(target_path, "config.json"), "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=4)
+        # 5. File: config.json 생성
+        try:
+            config = {
+                "project_id": new_project.id,
+                "organization_id": org.id,
+                "owner_id": req.user_id,
+                "features": ["logs"],
+                "created_at": str(datetime.now())
+            }
+            with open(os.path.join(target_path, "config.json"), "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=4)
+        except Exception as config_error:
+            # config.json 생성 실패 시 폴더 삭제 및 DB 롤백
+            shutil.rmtree(target_path, ignore_errors=True)
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"설정 파일 생성 실패: {str(config_error)}")
             
-        # 5. File: 로그 초기화
-        with open(os.path.join(target_path, "main.log"), "w", encoding="utf-8") as f:
-            f.write(f"[{datetime.now()}] Project '{req.project_name}' initialized for '{req.organization_name}'.\n")
+        # 6. File: 로그 초기화
+        try:
+            with open(os.path.join(target_path, "main.log"), "w", encoding="utf-8") as f:
+                f.write(f"[{datetime.now()}] Project '{req.project_name}' initialized for '{req.organization_name}'.\n")
+        except Exception as log_error:
+            # 로그 파일 실패는 치명적이지 않으므로 경고만
+            logger.warning(f"로그 파일 초기화 실패: {log_error}")
+        
+        # 7. 모든 파일 작업 성공 시 DB 커밋
+        await db.commit()
 
         return {"status": "success", "message": f"프로젝트 '{req.project_name}'가 성공적으로 개설되었습니다."}
         
+    except HTTPException:
+        # HTTPException은 그대로 전파
+        raise
     except Exception as e:
+        # 예상치 못한 에러 발생 시
         logger.error(f"Create Project Error: {str(e)}")
+        
+        # 생성된 폴더가 있다면 삭제
+        if os.path.exists(target_path):
+            try:
+                shutil.rmtree(target_path)
+            except Exception as cleanup_error:
+                logger.error(f"폴더 정리 실패: {cleanup_error}")
+        
+        # DB 롤백
+        await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 # =========================================================
@@ -588,7 +697,8 @@ def update_api_key(req: ApiKeyUpdate):
 # [AI Brain] 채팅 에이전트
 # =========================================================
 @app.post("/api/chat")
-async def chat_with_agent(request: ChatRequest):
+@limiter.limit("10/minute")  # [Phase 2] Rate Limiting: 분당 10회
+async def chat_with_agent(request: Request, chat_request: ChatRequest):
     """실시간 로그를 컨텍스트로 사용하여 AI 에이전트와 대화하고 해결책을 구합니다."""
     env_path = settings.ENV_FILE_PATH
     api_key = None
@@ -603,14 +713,14 @@ async def chat_with_agent(request: ChatRequest):
         return {"response": "⚠️ API 키가 설정되지 않았습니다. [설정] 탭에서 키를 입력해주세요."}
 
     # [보안] Path Traversal 방어 적용
-    project_path = validate_project_path(request.project_name)
+    project_path = validate_project_path(chat_request.project_name)
     log_path = project_path / "main.log"
     context = "로그 없음"
     if os.path.exists(log_path):
         with open(log_path, "r", encoding="utf-8") as f:
             context = "\n".join(f.read().splitlines()[-30:])
 
-    prompt = f"당신은 AI DevOps 봇입니다.\n[로그]\n{context}\n[질문]\n{request.message}\n\n해결책을 제시해주세요."
+    prompt = f"당신은 AI DevOps 봇입니다.\n[로그]\n{context}\n[질문]\n{chat_request.message}\n\n해결책을 제시해주세요."
     
     try:
         url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
@@ -648,6 +758,10 @@ async def ant_websocket_endpoint(websocket: WebSocket, client_id: str):
     # In production, fetch specific shared key for this client_id from DB/Vault
     # For now, we use the default hardcoded key in AntSecurity (or env var)
     security = AntSecurity() 
+    
+    # [Phase 2] WebSocket 보안: 실패 카운터
+    failed_attempts = 0
+    MAX_FAILED_ATTEMPTS = 3
     
     try:
         redis = RedisManager.get_instance().get_client()
@@ -725,7 +839,15 @@ async def ant_websocket_endpoint(websocket: WebSocket, client_id: str):
                 await websocket.send_text(json.dumps({"type": "ack", "status": "verified"}))
                 
             except Exception as e:
-                logger.error(f"🔐 Decryption Failed from {client_id}: {e}")
+                failed_attempts += 1
+                logger.error(f"🔐 Decryption Failed from {client_id}: {e} (Attempt {failed_attempts}/{MAX_FAILED_ATTEMPTS})")
+                
+                # [Phase 2] 최대 실패 횟수 초과 시 연결 종료
+                if failed_attempts >= MAX_FAILED_ATTEMPTS:
+                    logger.warning(f"🚫 Max failed attempts reached for {client_id}, closing connection")
+                    await websocket.close(code=4003)
+                    return
+                
                 # Don't close immediately to avoid DoS on simple error, but in high security mode, yes.
                 await websocket.send_text(json.dumps({"type": "error", "message": "Encryption Error"}))
                 

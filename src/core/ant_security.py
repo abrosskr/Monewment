@@ -8,17 +8,31 @@ class AntSecurity:
     def __init__(self, key_bytes: bytes = None):
         """
         Initialize with a 32-byte (256-bit) key.
-        If no key is provided, one behaves as if it's waiting for key exchange (not fully implemented yet).
-        For now, we assume a pre-shared key or one derived from an initial handshake.
+        If no key is provided, loads from ANT_ENCRYPTION_KEY environment variable.
         """
         if key_bytes:
             if len(key_bytes) != 32:
                 raise ValueError("AES-256 requires a 32-byte key.")
             self.aesgcm = AESGCM(key_bytes)
         else:
-            # [Fix] Use Default Hardcoded Key for Dev/Demo
-            default_key = b'0' * 32
-            self.aesgcm = AESGCM(default_key)
+            # Load from environment variable
+            from src.config import settings
+            key_hex = settings.ANT_ENCRYPTION_KEY
+            
+            if not key_hex:
+                raise RuntimeError(
+                    "ANT_ENCRYPTION_KEY environment variable not set. "
+                    "Generate one with: python scripts/generate_keys.py"
+                )
+            
+            try:
+                key_bytes = bytes.fromhex(key_hex)
+                if len(key_bytes) != 32:
+                    raise ValueError("ANT_ENCRYPTION_KEY must be 32 bytes (64 hex characters)")
+                self.aesgcm = AESGCM(key_bytes)
+            except ValueError as e:
+                raise RuntimeError(f"Invalid ANT_ENCRYPTION_KEY format: {e}")
+
 
     @staticmethod
     def generate_key() -> bytes:

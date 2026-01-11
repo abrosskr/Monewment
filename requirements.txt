@@ -32,3 +32,9 @@ passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 bcrypt
+
+# --- Rate Limiting ---
+slowapi
+
+# --- Monitoring & Metrics ---
+prometheus-fastapi-instrumentator

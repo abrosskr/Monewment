@@ -49,8 +49,16 @@ def run_test():
     # Or update list_projects to return metadata.
     # For now, let's use the DB directly to get project ID.
     
-    from src.database import SessionLocal
+    
+    # 51. DB Connection Helper
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from src.config import settings
     from src.models import Project, VMUsage, VMInstance
+
+    db_url = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+    engine = create_engine(db_url)
+    SessionLocal = sessionmaker(bind=engine)
     
     db = SessionLocal()
     project = db.query(Project).filter(Project.name == project_name).first()

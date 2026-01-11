@@ -1,21 +1,30 @@
 # 파일 위치: src/routers/ui_factory.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 import re
+import logging
+
+from src.dependencies import get_db
+from src.models import User, Project, ProjectBudget, Organization
 
 router = APIRouter(
     prefix="/api/v1/ui-factory",
     tags=["UI Factory (Monetization Core)"]
 )
 
+logger = logging.getLogger("UIFactory")
+
 # 1. [상품 정의] 요청 받을 주문서 양식
 class UIRequest(BaseModel):
     component_name: str
     spec_content: str
-    api_key: str | None = None  # 나중에 유료화 시 여기서 인증 처리
+    api_key: str | None = None
+    project_id: int | None = None # [Optional] Explicit project selection
 
 # 2. [핵심 로직] UI 생성 엔진 (여기가 핵심 기술)
-# 지금은 룰 기반이지만, 나중엔 LLM(Gemini/GPT)이 붙어서 고가 요금제로 팔리는 구간입니다.
 def generate_react_code(name: str, spec: str) -> str:
     # (1) 명세서 파싱 (기초적인 AI 흉내)
     width = "w-full"
@@ -51,20 +60,85 @@ export default function {name}() {{
 }}
 """
 
+async def process_billing(api_key: str, project_id: int | None, db: AsyncSession):
+    """
+    Validates API Key and deducts credit.
+    Cost: $0.10 per generation
+    """
+    GENERATION_COST = 0.10
+    
+    # 1. Validate User
+    if not api_key:
+        raise HTTPException(status_code=401, detail="API Key required for billing.")
+        
+    res_user = await db.execute(select(User).where(User.api_key == api_key).options(selectinload(User.organization).selectinload(Organization.projects)))
+    user = res_user.scalars().first()
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid API Key.")
+        
+    # 2. Determine Project
+    target_project = None
+    
+    if project_id:
+        # Check if project belongs to user's org
+        # Simplified: Assuming User belongs to Org, and Project belongs to SAME use's Org.
+        # Strict RBAC would check ProjectMember, but for now check Org ownership.
+        for p in user.organization.projects:
+            if p.id == project_id:
+                target_project = p
+                break
+        if not target_project:
+             raise HTTPException(status_code=403, detail="Project not found or access denied.")
+    else:
+        # Auto-select first active project
+        active_projects = [p for p in user.organization.projects if p.status == "ACTIVE"]
+        if not active_projects:
+            raise HTTPException(status_code=400, detail="No active projects found in your organization. Please create one.")
+        target_project = active_projects[0]
+        
+    # 3. Deduct Budget
+    # Find or Create Budget
+    res_budget = await db.execute(select(ProjectBudget).where(ProjectBudget.project_id == target_project.id))
+    budget = res_budget.scalars().first()
+    
+    if not budget:
+        # Lazy Init
+        budget = ProjectBudget(project_id=target_project.id, current_month_spend=0.0)
+        db.add(budget)
+        
+    # Update Spend
+    # Note: ProjectBudget.current_month_spend is defined as Numeric in models_append.txt but usage in metering.py implies float in SQLite?
+    # src/models.py: Column(Numeric(10, 4), default=0)
+    # We should cast to float for python math or keep Decimal. Let's cast to float for simplicity as per metering.py
+    
+    current_val = float(budget.current_month_spend or 0.0)
+    budget.current_month_spend = current_val + GENERATION_COST
+    
+    await db.commit()
+    
+    logger.info(f"💰 Billing Success: Project {target_project.name} charged ${GENERATION_COST}")
+    return target_project.name, GENERATION_COST
+
+
 # 3. [판매 창구] API 엔드포인트
 @router.post("/generate")
-async def generate_ui(request: UIRequest):
+async def generate_ui(request: UIRequest, db: AsyncSession = Depends(get_db)):
     """
     [유료 API] 명세서를 보내면 React 코드를 반환합니다.
+    (Cost: $0.10 per call)
     """
-    # TODO: 여기서 request.api_key를 검사해서 과금 처리를 합니다.
-    print(f"💰 [UI Factory] 주문 접수됨: {request.component_name}")
+    # Billing Logic (Real)
+    charged_project, cost = await process_billing(request.api_key, request.project_id, db)
+    
+    logger.info(f"💰 [UI Factory] Order Received: {request.component_name} (from {charged_project})")
     
     generated_code = generate_react_code(request.component_name, request.spec_content)
     
     return {
         "status": "success",
         "component_name": request.component_name,
+        "billed_to": charged_project,
+        "cost": cost,
         "code": generated_code,
-        "credits_used": 1  # 과금 로그 예시
     }

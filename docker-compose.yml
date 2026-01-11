@@ -7,9 +7,9 @@ services:
     container_name: monewment-db
     restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: monewment1234
-      POSTGRES_DB: monewment
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-monewment}
     ports:
       - "5433:5432"
     volumes:
@@ -37,7 +37,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://user:monewment1234@db:5432/monewment
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-monewment}
       REDIS_URL: redis://redis:6379/0
     depends_on:
       - db

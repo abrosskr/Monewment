@@ -1,25 +1,18 @@
-# Next Actions: Profit & Scale 🚀
+# 📅 Next Session Tasks
 
-**Status:** v1.1.0 (Hardened) Released.
-**Focus:** Infrastructure is solid. Now focus on **Visibility (Dashboard)** and **Revenue (Profit)**.
+## 🚀 Goals for Next Session
+Based on `masterplan.md`, the next major milestone is **Phase 6: DeepVault & DeepRender Core**.
 
-## 🎯 High Priority (Phase 14: SaaS Intelligence)
-- [ ] **Admin Dashboard 2.0**:
-    - [ ] Add "Traffic Monitor" (Real-time P2P Transfer Status).
-    - [ ] Add "Security Center" (Blocked Attacks, Hash Mismatches Log).
-    - [ ] Visualize "Revenue Charts" (Projected vs Actual).
-- [ ] **Profit Maximization Scheduler**:
-    - [ ] Implement `ProfitEngine`-based Logic: Dispatch heavy jobs to high-efficiency nodes first.
-    - [ ] Implement "Electricity Cost Awareness".
+### 1. DeepVault (Secure Storage)
+- [ ] **Infrastructure**: Deploy MinIO or similar Object Storage (or start with local filesystem simulation).
+- [ ] **API**: Implement `/api/v1/vault/upload` and `/download`.
+- [ ] **Encryption**: Integrate `AntSecurity` for client-side encryption before storage.
 
-## 🛠️ Medium Priority (Maintenance)
-- [ ] **Docker Containerization**: Move Blender rendering to Docker for ultimate sandboxing (Enterprise tier).
-- [ ] **Full-Scale Load Test**: Simulate 1,000 Ants connecting simultaneously via Relay.
+### 2. DeepRender (Distributed Computing)
+- [ ] **Job Queue**: Set up Redis Stream for rendering tasks.
+- [ ] **Worker**: Create `render_worker.py` (Blender CLI wrapper).
+- [ ] **Scheduling**: Connect `ClusterManager` to distribute jobs to KubeVirt VMs.
 
-## 📝 Documentation
-- [ ] Update `API Reference` for `v1` endpoints.
-- [ ] Create `User Manual` for PC Bang owners (Installation & firewall guide).
-
----
-**Ready to start?**
-Run: `uvicorn src.main:app` and navigate to `/dashboard`.
+### 3. Cleanup & Optimization
+- [ ] **Refactor**: Split `src/models.py` if it grows too large (currently handling Auth, Metering, Payment, Billing).
+- [ ] **Testing**: Add unit tests for `BillingService` (currently verified via script).

@@ -30,18 +30,21 @@ class RedisManager:
             await self.redis.close()
             self.redis = None
 
-    def get_client(self) -> redis.Redis:
+    def get_client(self) -> Optional[redis.Redis]:
+        """
+        Redis 클라이언트 반환. 연결되지 않은 경우 None 반환.
+        """
         if not self.redis:
-            raise ConnectionError("Redis is not initialized. Call connect() first.")
+            from src.core.logger import setup_logger
+            logger = setup_logger()
+            logger.warning("Redis not connected. Some features may be unavailable.")
+            return None
         return self.redis
 
+
 # Dependency for FastAPI
-async def get_redis() -> redis.Redis:
+async def get_redis() -> Optional[redis.Redis]:
+    """FastAPI 의존성으로 사용. Redis 연결 실패 시 None 반환."""
     manager = RedisManager.get_instance()
-    try:
-        return manager.get_client()
-    except ConnectionError:
-        # Fallback or auto-connect logic if needed, 
-        # but usually connect() is called at startup.
-        await manager.connect()
-        return manager.get_client()
+    return manager.get_client()
+
