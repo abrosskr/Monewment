@@ -70,7 +70,9 @@ jobs:
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         # Config Pydantic Validation Bypass (Dummy Values)
-        SECRET_KEY: "ci-secret-key"
+        # Config Pydantic Validation Bypass (Dummy Values)
+        SECRET_KEY: "ci-secret-key-must-be-at-least-32-chars-long" 
+        ANT_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000" # 64 hex chars
         POSTGRES_SERVER: "localhost"
         POSTGRES_USER: "postgres"
         POSTGRES_PASSWORD: "password"
