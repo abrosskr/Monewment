@@ -1,6 +1,6 @@
 # 🏗️ Monewment System Architecture
 
-> **Last Updated:** 2026-01-08 11:55:47\n\n---\n\n## 📋 System Overview\n\nMonewment is a B2B SaaS platform for high-performance computing resources (GPU VMs) targeting AI researchers and game developers.\n\n## 🗺️ System Architecture Diagram\n\n```mermaid\ngraph TB
+> **Last Updated:** 2026-01-13 10:46:25\n\n---\n\n## 📋 System Overview\n\nMonewment is a B2B SaaS platform for high-performance computing resources (GPU VMs) targeting AI researchers and game developers.\n\n## 🗺️ System Architecture Diagram\n\n```mermaid\ngraph TB
     subgraph "Frontend Layer"
         UI[Next.js UI]
         Admin[Admin Dashboard]
