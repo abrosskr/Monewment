@@ -299,3 +299,25 @@ Loaded local kubeconfig.
 {"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:45.254202Z"}
 {"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:45.254976Z"}
 {"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:45.255036Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:34:46.723348Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:34:46.723449Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T10:34:46.801211Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:34:46.801541Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:34:46.801569Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T10:34:46.808690Z"}
+Loaded local kubeconfig.
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:47.270144Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:47.270266Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "method": "GET", "request_id": "a6134399-e728-4ffd-9d69-509e0429852b", "path": "/health", "client_ip": "127.0.0.1", "level": "info", "timestamp": "2026-01-13T10:46:58.025216Z"}
+{"status_code": 404, "duration_ms": null, "event": "request_completed", "method": "GET", "request_id": "857e75bb-e1c1-44c6-a724-36c071b972cb", "path": "/api/v1/tools/doc-sync", "client_ip": "127.0.0.1", "level": "info", "timestamp": "2026-01-13T10:47:00.037031Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "method": "GET", "request_id": "8b2a8e8f-fcf7-47ff-9568-9b6bfbd5e29b", "path": "/health", "client_ip": "127.0.0.1", "level": "info", "timestamp": "2026-01-13T10:58:38.625632Z"}
+{"status_code": 404, "duration_ms": null, "event": "request_completed", "method": "GET", "request_id": "d1a39285-5940-47d4-a268-b0ee0cad5743", "path": "/api/v1/tools/doc-sync", "client_ip": "127.0.0.1", "level": "info", "timestamp": "2026-01-13T10:58:40.661710Z"}
+{"status_code": 200, "duration_ms": null, "event": "request_completed", "method": "GET", "request_id": "d06f84d4-dec6-4404-8385-4902931997c9", "path": "/health", "client_ip": "127.0.0.1", "level": "info", "timestamp": "2026-01-13T11:32:45.686581Z"}
+{"status_code": 404, "duration_ms": null, "event": "request_completed", "method": "GET", "request_id": "41c76ad0-f9d3-4283-a75e-3a3576857dd1", "path": "/api/v1/tools/doc-sync", "client_ip": "127.0.0.1", "level": "info", "timestamp": "2026-01-13T11:32:47.724189Z"}

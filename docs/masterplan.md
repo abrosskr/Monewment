@@ -383,3 +383,68 @@ Monewment 프로젝트의 사용자 과금 및 리소스 미터링 시스템을 
 ---
 **[End of Phase 5 Payment]**
 Next Target: **Phase 6 (DeepVault & DeepRender Core Implementation)**
+
+---
+
+## 14. Phase 6: Codebase Refactoring & Security Hardening
+> **Execution Period:** 2026-01-13 ~ 2026-01-14
+> **Status:** ✅ Fully Implemented
+
+대규모 코드베이스 정리와 보안 강화 작업을 수행했습니다.
+
+### A. Codebase Refactoring (main.py Modularization)
+
+기존 ~1,000줄에 달하던 `src/main.py`를 역할별로 분리하여 유지보수성을 대폭 개선했습니다.
+
+**생성된 파일들:**
+| 파일 | 역할 |
+|------|------|
+| `src/api/v1/endpoints/auth.py` | 회원가입, 로그인, JWT 발급 |
+| `src/api/v1/endpoints/projects.py` | 프로젝트 엔진 생성, 폴더 구조 조회 |
+| `src/api/v1/endpoints/services.py` | 설치 가능 서비스 목록, API 키 관리 |
+| `src/api/v1/endpoints/chat.py` | AI 에이전트 대화 |
+| `src/api/v1/endpoints/ant_socket.py` | Ant WebSocket 연결 처리 |
+| `src/api/v1/admin/dashboard.py` | 관리자 통계, 계층 조회, 클러스터 관리 |
+| `src/core/limiter.py` | Rate Limiter 인스턴스 (순환 참조 방지) |
+| `src/core/background.py` | Write-Behind 백그라운드 태스크 |
+| `src/schemas.py` | 기존 main.py 내 Pydantic 모델들 통합 |
+
+**결과:** `main.py`는 이제 ~200줄로 간결해졌으며, FastAPI 앱 초기화와 라우터 등록만 담당합니다.
+
+### B. API Key Security Hardening (SHA-256 Hashing)
+
+API 키를 평문이 아닌 해시값으로 DB에 저장하도록 보안을 강화했습니다.
+
+**구현 내용:**
+1.  `src/core/security.py`:
+    *   `generate_api_key()`: `sk_live_...` 형식의 안전한 랜덤 키 생성.
+    *   `hash_api_key()`: SHA-256 해싱.
+    *   `get_api_key_user()`: 요청된 키를 해싱 후 DB와 비교.
+2.  `src/api/v1/endpoints/auth.py`:
+    *   `POST /api/auth/api-key`: 새 API 키 발급 엔드포인트 추가. 발급된 키는 한 번만 보여지며, DB에는 해시값만 저장됨.
+
+### C. Modular Email Service
+
+하위 프로젝트에서 재사용 가능한 이메일 인증 API 모듈을 구축했습니다.
+
+**구현 내용:**
+1.  `src/core/email_utils.py`:
+    *   `EmailUtils.validate_format()`: `email-validator` 패키지 활용.
+    *   `EmailUtils.send_verification_email()`: Redis에 OTP 저장 + Mock 콘솔 출력 (SMTP 미설정 시).
+    *   `EmailUtils.verify_code()`: Redis에서 OTP 검증.
+2.  `src/api/v1/endpoints/email_service.py`:
+    *   `POST /api/services/email/validate`: 이메일 형식 검증.
+    *   `POST /api/services/email/send-verification`: 인증번호 발송 (Mock Mode 지원).
+    *   `POST /api/services/email/verify-code`: 인증번호 검증.
+
+### D. CI/CD Stability Fix
+
+GitHub Actions 워크플로우가 보안 키 검증 로직 도입 이후 실패하던 문제를 해결했습니다.
+
+**수정 내용:**
+*   `.github/workflows/ci.yml`: `SECRET_KEY` (32자 이상) 및 `ANT_ENCRYPTION_KEY` (64자 Hex) 더미 값을 CI 환경 변수에 추가하여 `config.py` 검증을 통과하도록 함.
+
+---
+**[End of Phase 6 Refactoring]**
+Next Target: **Phase 7 (Internationalization - i18n / Localization)**
+
