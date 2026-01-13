@@ -63,3 +63,58 @@ class HealthCheckResponse(BaseModel):
     status: str  # "healthy" or "unhealthy"
     checks: Dict[str, bool]
     timestamp: Optional[str] = None
+
+# --- [Moved from main.py] ---
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class CreateProjectRequest(BaseModel):
+    user_id: int
+    project_name: str
+    organization_name: str 
+
+class ApiKeyUpdate(BaseModel):
+    service_name: str
+    api_key: str
+
+class ChatRequest(BaseModel):
+    project_name: str
+    message: str
+
+class InstallRequest(BaseModel):
+    project_name: str
+    admin_id: str
+    password: str
+    organization_id: int = 1
+    features: list[str] = ["logs"]
+    
+class EnvUpdateRequest(BaseModel):
+    content: str
+
+class PricingUpdateRequest(BaseModel):
+    hourly_rate: float
+
+class ClusterCreateRequest(BaseModel):
+    name: str
+    region: str = "kr-seoul-1"
+    cpu_capacity: int = 100
+    ram_capacity_gb: int = 512
+    gpu_capacity: int = 8
+
+class OrgApproveRequest(BaseModel):
+    org_id: int
+    cluster_id: int
+    quota_cpu: int
+    quota_ram_gb: int
+    quota_gpu: int
+
+class ProjectExpandRequest(BaseModel):
+    org_id: int
+    project_name: str
+    # Top-Down 방식이므로 템플릿 선택 등 추가 가능

@@ -96,13 +96,24 @@ from fastapi.security.api_key import APIKeyHeader
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
+import hashlib
+import secrets
+
+def generate_api_key() -> str:
+    """안전한 랜덤 API 키를 생성합니다. (Prefix: sk_live_)"""
+    return f"sk_live_{secrets.token_urlsafe(32)}"
+
+def hash_api_key(api_key: str) -> str:
+    """API 키를 SHA-256으로 해싱합니다."""
+    return hashlib.sha256(api_key.encode()).hexdigest()
+
 async def get_api_key_user(
     api_key_header: str = Security(api_key_header),
     db: AsyncSession = Depends(get_db)
 ) -> User:
     """
     Validates the X-API-Key header and returns the associated User.
-    Used for B2B API endpoints.
+    [Security] Hashes the incoming key before querying the DB.
     """
     if not api_key_header:
         raise HTTPException(
@@ -110,8 +121,12 @@ async def get_api_key_user(
             detail="Missing API Key"
         )
     
+    # 1. Hash the incoming key
+    hashed_key = hash_api_key(api_key_header)
+    
+    # 2. Query DB with hash
     # Simple query for now (Should be cached in Redis in production)
-    result = await db.execute(select(User).where(User.api_key == api_key_header))
+    result = await db.execute(select(User).where(User.api_key == hashed_key))
     user = result.scalars().first()
     
     if not user:

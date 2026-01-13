@@ -96,3 +96,206 @@ Loaded local kubeconfig.
 {"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-11T06:39:43.160225Z"}
 {"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/v1/billing/charge", "client_ip": "127.0.0.1", "method": "POST", "request_id": "9c6c9a90-1626-4ca5-a9ab-736a0093630d", "level": "info", "timestamp": "2026-01-11T06:39:56.324950Z"}
 {"status_code": 200, "duration_ms": null, "event": "request_completed", "path": "/api/v1/billing/balance/7", "client_ip": "127.0.0.1", "method": "GET", "request_id": "4b884cf1-4764-4cea-8e54-0086e4fb014f", "level": "info", "timestamp": "2026-01-11T06:39:58.353994Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:34:22.857718Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:34:22.977950Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:34:22.978271Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:34:22.986626Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:34:23.977081Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:53:14.483741Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T09:53:14.484379Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T09:53:14.484561Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:53:15.868268Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:53:15.932743Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:53:15.933036Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:53:15.939728Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:53:16.550504Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:53:30.012165Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T09:53:30.013243Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T09:53:30.013686Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:53:31.611281Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:53:31.674907Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:53:31.675295Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:53:31.682774Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:53:32.263662Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:53:37.239630Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T09:53:37.240177Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T09:53:37.240408Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:53:38.597540Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:53:38.669879Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:53:38.670216Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:53:38.677105Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:53:39.235019Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:54:12.865174Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T09:54:12.865759Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T09:54:12.866006Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:54:14.375595Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:54:14.438336Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:54:14.438638Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:54:14.446188Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:54:15.078685Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:54:15.079344Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:54:16.484937Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:54:16.544046Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:54:16.544343Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:54:16.550934Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:54:17.114904Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:54:17.115609Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:54:18.417167Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:54:18.478056Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:54:18.478376Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:54:18.485248Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:54:19.036601Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:54:37.029390Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T09:54:37.029902Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T09:54:37.030156Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:54:38.356186Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:54:38.417796Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:54:38.418090Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:54:38.424856Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:54:38.994346Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:54:42.489208Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T09:54:42.489834Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T09:54:42.490071Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:54:43.877447Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:54:43.943288Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:54:43.943621Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:54:43.950364Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:54:44.504876Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:54:44.505636Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:54:45.827380Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:54:45.887639Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:54:45.887927Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:54:45.894662Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:54:46.449348Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:55:26.437561Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T09:55:26.438206Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T09:55:26.438448Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T09:55:27.859164Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T09:55:27.919498Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T09:55:27.919817Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T09:55:27.926704Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T09:55:28.494160Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T09:55:28.494891Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:26:58.063721Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T10:26:58.125795Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:26:58.126097Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T10:26:58.133102Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:26:58.596065Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:28.849806Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T10:34:28.850785Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T10:34:28.851114Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:34:30.284634Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T10:34:30.374212Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:34:30.374537Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T10:34:30.381593Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:34:30.700825Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T10:34:30.790972Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:34:30.792072Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T10:34:30.803023Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:30.981253Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:31.438378Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:33.621148Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T10:34:33.621796Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T10:34:33.622012Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:33.666627Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T10:34:33.667354Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T10:34:33.667752Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:34:35.219650Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:34:35.241891Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T10:34:35.290263Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:34:35.290575Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T10:34:35.297397Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T10:34:35.305199Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:34:35.305489Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T10:34:35.312008Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:35.801905Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:35.817852Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:43.213275Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T10:34:43.213902Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T10:34:43.214118Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:43.228493Z"}
+{"event": "\ud83d\uded1 Redis Connection Closed.", "level": "info", "timestamp": "2026-01-13T10:34:43.229134Z"}
+{"event": "\ud83d\uded1 Shutting down...", "level": "info", "timestamp": "2026-01-13T10:34:43.229381Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:34:44.683463Z"}
+{"event": "\ud83d\ude80 Starting up... Checking Database Schema...", "level": "info", "timestamp": "2026-01-13T10:34:44.687549Z"}
+{"event": "\u2705 Database Tables Verified (Async Mode).", "level": "info", "timestamp": "2026-01-13T10:34:44.754157Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:34:44.754757Z"}
+{"event": "\u2705 System Collector Attached.", "level": "info", "timestamp": "2026-01-13T10:34:44.754718Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T10:34:44.763863Z"}
+{"event": "\u2705 Redis Connected.", "level": "info", "timestamp": "2026-01-13T10:34:44.764110Z"}
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+🌐 Initializing Cluster Manager...
+Loaded local kubeconfig.
+Loaded local kubeconfig.
+✅ Default Cluster (ID: 1) Client Initialized.
+✅ Default Cluster (ID: 1) Client Initialized.
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:45.254159Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Started.", "level": "info", "timestamp": "2026-01-13T10:34:45.254202Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:45.254976Z"}
+{"event": "\ud83d\udcbe Write-Behind Task Cancelled.", "level": "info", "timestamp": "2026-01-13T10:34:45.255036Z"}
