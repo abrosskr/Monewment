@@ -1,8 +1,8 @@
 # [Project Specification] DeepSync × DeepVault × DeepRender Integrated Architecture
 
 **: Web3 기반의 제로 트러스트 보안 및 분산 렌더링을 지원하는 국가급 AI 컴퓨팅 인프라**
-> **Current Version:** v2.0 (DeepRender Expanded)  
-> **Last Updated:** 2026-01-07  
+> **Current Version:** v2.1 (Port Standards Added)
+> **Last Updated:** 2026-01-14
 
 ---
 
@@ -448,3 +448,18 @@ GitHub Actions 워크플로우가 보안 키 검증 로직 도입 이후 실패�
 **[End of Phase 6 Refactoring]**
 Next Target: **Phase 7 (Internationalization - i18n / Localization)**
 
+---
+
+## 15. Project Standards: Port Registry
+> **Status:** 🛑 Immutable Convention (2026-01-14)
+
+프로젝트 전체에서 사용되는 포트 규약을 정의합니다. 모든 개발 및 배포 환경은 이 규약을 엄격히 준수해야 합니다.
+
+| Service | Port | Protocol | Usage |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | `3000` | HTTP | Next.js Client |
+| **Backend** | `8000` | HTTP | FastAPI Server |
+| **PostgreSQL** | `5433` | TCP | Database (Host Access) |
+| **Redis** | `6379` | TCP | Message Broker |
+
+> 참조: [PORT_STRATEGY.md](file:///d:/projects/Monewment/docs/standards/PORT_STRATEGY.md)

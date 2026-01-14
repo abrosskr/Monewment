@@ -16,7 +16,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$ro
 
 # 3. [Server] 백엔드 API 서버 가동
 Write-Host "   [2/3] 백엔드 API 서버(생성 엔진) 가동..."
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$root'; python -m uvicorn src.main:app --reload --port 8001"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$root'; python -m uvicorn src.main:app --reload --port 8000"
 
 # 4. [Frontend] GUI 가동
 Write-Host "   [3/3] 프론트엔드 가동..."

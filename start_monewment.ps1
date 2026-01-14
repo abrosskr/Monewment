@@ -17,7 +17,8 @@ if ($npmFile) {
     $npmDir = $npmFile.Directory.FullName
     Write-Host "🎨 2. Frontend 발견! ($npmDir) -> 새 창에서 실행..." -ForegroundColor Cyan
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm run dev" -WorkingDirectory "$npmDir"
-} else {
+}
+else {
     Write-Host "⚠️ package.json을 찾을 수 없습니다. (폴더 구조 확인 필요)" -ForegroundColor Red
 }
 
@@ -26,4 +27,4 @@ Write-Host "🧠 3. Hub API 서버 가동 (Port: 8001)..." -ForegroundColor Cyan
 if (Test-Path ".\venv\Scripts\Activate.ps1") {
     . .\venv\Scripts\Activate.ps1
 }
-uvicorn src.main:app --reload --port 8001
+uvicorn src.main:app --reload --port 8000
