@@ -1,127 +1,130 @@
-"use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+"use client"
 
-export default function Home() {
-  const [dbStatus, setDbStatus] = useState<string>("Initializing...");
-  const [hotData, setHotData] = useState<any[]>([]);
-  const [coldData, setColdData] = useState<any>(null);
-  const [mode, setMode] = useState<"Lite" | "Full">("Lite");
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Activity, Flame, Thermometer } from 'lucide-react'
 
+// TSV Data Type
+type PhysicsLog = {
+  id: number
+  logged_at: string
+  temp: number
+  velocity: number
+  accel: number
+  integral: number
+}
+
+export default function VendorsDashboard() {
+  const [logs, setLogs] = useState<PhysicsLog[]>([])
+  const [isConnected, setIsConnected] = useState(false)
+
+  // 1. Initial Load
   useEffect(() => {
-    checkConnection();
-  }, []);
+    const fetchInitialData = async () => {
+      const { data, error } = await supabase
+        .from('physics_logs')
+        .select('*')
+        .order('id', { ascending: false })
+        .limit(100)
 
-  const checkConnection = async () => {
-    try {
-      setDbStatus("Connecting to Supabase...");
-      // Mock check for now as keys are placeholders
-      if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("your-project")) {
-        setDbStatus("⚠️ Config Missing (Using Mock Mode)");
-      } else {
-        const { error } = await supabase.from("test_connection_ping").select("*").limit(1);
-
-        // If we get an error, it means we connected!
-        // Common errors that prove connection:
-        // 1. "Could not find the table..." (PostgREST schema cache error)
-        // 2. Code "42P01" (Postgres undefined table error)
-        if (error) {
-          const Msg = error.message.toLowerCase();
-          if (Msg.includes("could not find the table") || Msg.includes("relation") || error.code === '42P01') {
-            // SUCCESS: We reached Supabase, it just told us the table is missing.
-            setDbStatus("✅ Connected to Supabase (Dual-Core Ready)");
-            return;
-          }
-          throw error; // Throw real connection errors (network, auth)
-        }
-
-        setDbStatus("✅ Connected to Supabase (Dual-Core Ready)");
+      if (data) {
+        setLogs(data.reverse()) // Show oldest to newest
+        setIsConnected(true)
       }
-    } catch (e: any) {
-      setDbStatus(`❌ Connection Failed: ${e.message}`);
     }
-  };
+    fetchInitialData()
 
-  const loadHotData = () => {
-    // Simulate fetching metadata from Supabase (500MB limit safe)
-    setHotData([
-      { id: 1, name: "Vendor A", type: "Supplier", managedBy: "Supabase" },
-      { id: 2, name: "Vendor B", type: "Logistics", managedBy: "Supabase" },
-    ]);
-  };
+    // 2. Real-time Subscription
+    const channel = supabase
+      .channel('realtime_logs')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'physics_logs' }, (payload) => {
+        const newLog = payload.new as PhysicsLog
+        setLogs(prev => [...prev.slice(1), newLog]) // Keep window of 100
+      })
+      .subscribe()
 
-  const loadColdData = async () => {
-    // Simulate fetching heavy data from Monewment API (1GB+ Storage)
-    setColdData({
-      source: "Monewment Core API (Simulated)",
-      payloadSize: "1.2 GB",
-      content: "Heavy binary/archive data loaded on-demand...",
-    });
-  };
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
+  // Latest Values
+  const current = logs.length > 0 ? logs[logs.length - 1] : { temp: 0, velocity: 0, integral: 0 }
 
   return (
-    <div className="min-h-screen p-8 bg-gray-900 text-white font-mono">
-      <h1 className="text-3xl font-bold mb-4 text-blue-400">
-        🛡️ Monewment Vendors (Federation Node)
-      </h1>
+    <div className="min-h-screen bg-slate-950 text-white p-8 font-sans">
+      <header className="mb-8 flex justify-between items-center border-b border-slate-800 pb-4">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+            VENDORS <span className="text-sm font-light text-slate-400">Sentient Kitchen Core</span>
+          </h1>
+          <p className="text-slate-500 mt-1">Live Metrology Dashboard (Mumbai Region)</p>
+        </div>
+        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${isConnected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+          {isConnected ? 'System Online' : 'Connecting...'}
+        </div>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Status Panel */}
-        <div className="border border-gray-700 p-6 rounded-lg bg-gray-800">
-          <h2 className="text-xl font-bold mb-4 border-b border-gray-600 pb-2">System Status</h2>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Database (Supabase):</span>
-              <span className="font-bold">{dbStatus}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Storage Strategy:</span>
-              <span className="text-green-400">Federated (Hybrid)</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Daily Egress Limit:</span>
-              <span className="text-yellow-400">50 MB / Day</span>
-            </div>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <KPI title="Temperature (T)" value={`${current.temp.toFixed(1)}°C`} icon={<Thermometer className="text-orange-500" />} color="border-orange-500/30" />
+        <KPI title="Velocity (V)" value={`${current.velocity.toFixed(3)}`} icon={<Activity className="text-blue-500" />} color="border-blue-500/30" />
+        <KPI title="Cookedness (I)" value={`${current.integral.toFixed(0)}`} icon={<Flame className="text-red-500" />} color="border-red-500/30" />
+      </div>
+
+      {/* Main Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Chart 1: Temperature & Integral */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold mb-4 text-slate-300">Energy Profile (T)</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={logs}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="logged_at" tick={false} stroke="#64748b" />
+                <YAxis stroke="#64748b" domain={['auto', 'auto']} />
+                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
+                <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="integral" stroke="#ef4444" strokeWidth={1} dot={false} yAxisId={1} hide />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Control Panel */}
-        <div className="border border-gray-700 p-6 rounded-lg bg-gray-800">
-          <h2 className="text-xl font-bold mb-4 border-b border-gray-600 pb-2">Optimization Controls</h2>
-          <div className="flex gap-4">
-            <button
-              onClick={loadHotData}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded transition"
-            >
-              Load Metadata (Lite)
-            </button>
-            <button
-              onClick={loadColdData}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded transition"
-            >
-              Load Heavy Payload
-            </button>
+        {/* Chart 2: Velocity & Acceleration */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold mb-4 text-slate-300">Reaction Velocity (V)</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={logs}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="logged_at" tick={false} stroke="#64748b" />
+                <YAxis stroke="#64748b" />
+                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
+                <Line type="monotone" dataKey="velocity" stroke="#3b82f6" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Data View */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="border border-blue-900/50 p-4 rounded bg-blue-900/10">
-          <h3 className="font-bold text-blue-300 mb-2">🔥 Hot Data (Supabase)</h3>
-          <pre className="text-sm overflow-auto text-gray-300">
-            {hotData.length ? JSON.stringify(hotData, null, 2) : "No data loaded."}
-          </pre>
-        </div>
-
-        <div className="border border-purple-900/50 p-4 rounded bg-purple-900/10">
-          <h3 className="font-bold text-purple-300 mb-2">🧊 Cold Data (Monewment Core)</h3>
-          <pre className="text-sm overflow-auto text-gray-300">
-            {coldData ? JSON.stringify(coldData, null, 2) : "No heavy data requested."}
-          </pre>
-        </div>
-      </div>
+      {/* Footer */}
+      <footer className="mt-8 text-center text-slate-600 text-sm">
+        Powered by Monewment & Supabase (Live)
+      </footer>
     </div>
-  );
+  )
+}
+
+function KPI({ title, value, icon, color }: { title: string, value: string, icon: any, color: string }) {
+  return (
+    <div className={`bg-slate-900 border ${color} rounded-xl p-6 flex items-center justify-between`}>
+      <div>
+        <p className="text-slate-400 text-sm font-medium">{title}</p>
+        <p className="text-3xl font-bold mt-1 tracking-tight">{value}</p>
+      </div>
+      <div className="p-3 bg-slate-800 rounded-lg">{icon}</div>
+    </div>
+  )
 }
