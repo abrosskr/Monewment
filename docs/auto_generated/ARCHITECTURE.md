@@ -1,6 +1,6 @@
 # 🏗️ Monewment System Architecture
 
-> **Last Updated:** 2026-01-24 22:17:52\n\n---\n\n## 📋 System Overview\n\nMonewment is a B2B SaaS platform for high-performance computing resources (GPU VMs) targeting AI researchers and game developers.\n\n## 🗺️ System Architecture Diagram\n\n```mermaid\ngraph TB
+> **Last Updated:** 2026-01-27 09:51:51\n\n---\n\n## 📋 System Overview\n\nMonewment is a B2B SaaS platform for high-performance computing resources (GPU VMs) targeting AI researchers and game developers.\n\n## 🗺️ System Architecture Diagram\n\n```mermaid\ngraph TB
     subgraph "Frontend Layer"
         UI[Next.js UI]
         Admin[Admin Dashboard]
@@ -40,7 +40,7 @@
     K8s --> KubeVirt
     KubeVirt --> Guac
     Collector --> DB
-```\n\n---\n\n## 🛠️ Technology Stack\n\n### Backend\n- **Framework:** FastAPI (Python 3.12+)\n- **Database:** PostgreSQL 15\n- **ORM:** SQLAlchemy (Sync)\n- **Authentication:** JWT + Bcrypt\n- **Container Orchestration:** Kubernetes\n- **Virtualization:** KubeVirt\n\n### Frontend\n- **Framework:** Next.js 16.1.1 (App Router)\n- **UI Library:** React 19\n- **Styling:** Tailwind CSS 4\n- **Language:** TypeScript\n\n### Infrastructure\n- **Containerization:** Docker\n- **Orchestration:** Kubernetes (Local: Docker Desktop)\n- **Remote Access:** Apache Guacamole\n\n---\n\n## 🧠 AI Architecture Analysis\n\n> ❌ AI 분석 실패 (코드 400)\n\n---\n\n## 🔄 Data Flow\n\n```mermaid\nsequenceDiagram
+```\n\n---\n\n## 🛠️ Technology Stack\n\n### Backend\n- **Framework:** FastAPI (Python 3.12+)\n- **Database:** PostgreSQL 15\n- **ORM:** SQLAlchemy (Sync)\n- **Authentication:** JWT + Bcrypt\n- **Container Orchestration:** Kubernetes\n- **Virtualization:** KubeVirt\n\n### Frontend\n- **Framework:** Next.js 16.1.1 (App Router)\n- **UI Library:** React 19\n- **Styling:** Tailwind CSS 4\n- **Language:** TypeScript\n\n### Infrastructure\n- **Containerization:** Docker\n- **Orchestration:** Kubernetes (Local: Docker Desktop)\n- **Remote Access:** Apache Guacamole\n\n---\n\n## 🧠 AI Architecture Analysis\n\n> ❌ AI 분석 실패 (코드 404)\n\n---\n\n## 🔄 Data Flow\n\n```mermaid\nsequenceDiagram
     participant User
     participant Frontend
     participant API
