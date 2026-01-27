@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "vsn": "1.0.0",
+    "recipe_id": "RECIPE_10K_0019",
+    "author": "AutoPipeline",
+    "target_device_profile": "Universal_v1"
+  },
+  "ingredients": {
+    "참치                                                                                                            1캔 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "양파                                                                                                            1개 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "청양고추                                                                                                            3개 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "기름                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "물                                                                                                            1/2컵 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "된장                                                                                                            3T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "고추장                                                                                                            2T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "고춧가루                                                                                                            1/2T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "다진마늘                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "올리고당                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "매실엑기스                                                                                                            2/3T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "참기름                                                                                                            1/2T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "깨                                                                                                            1 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "인덱스도마": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "믹싱볼": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "요리스푼": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "볶음팬": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    }
+  },
+  "taste_profile": {
+    "salt": 0.0,
+    "sugar": 0.0,
+    "acid": 0.0,
+    "glutamate": 0.0,
+    "capsaicin": 0.0,
+    "lipid": 0.0
+  },
+  "timeline": []
+}

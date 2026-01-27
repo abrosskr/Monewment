@@ -1,0 +1,110 @@
+{
+  "metadata": {
+    "vsn": "1.0.0",
+    "recipe_id": "RECIPE_10K_0021",
+    "author": "AutoPipeline",
+    "target_device_profile": "Universal_v1"
+  },
+  "ingredients": {
+    "시금치                                                                                                            150g ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "계란                                                                                                            4개 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "버터                                                                                                            20g ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "다진 마늘                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "소금                                                                                                            약간 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "올리브유                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "소금                                                                                                            1꼬집 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "채반": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "볼": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "조리용젓가락": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "프라이팬": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "조리용스푼": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "접시": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    }
+  },
+  "taste_profile": {
+    "salt": 0.0,
+    "sugar": 0.0,
+    "acid": 0.0,
+    "glutamate": 0.0,
+    "capsaicin": 0.0,
+    "lipid": 0.0
+  },
+  "timeline": []
+}

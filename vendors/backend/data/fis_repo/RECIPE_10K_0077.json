@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "vsn": "1.0.0",
+    "recipe_id": "RECIPE_10K_0077",
+    "author": "AutoPipeline",
+    "target_device_profile": "Universal_v1"
+  },
+  "ingredients": {
+    "새송이버섯                                                                                                            2개 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "버터                                                                                                            30g ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "어린잎채소                                                                                                             ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "간장                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "맛술                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "올리고당                                                                                                            1/2T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    }
+  },
+  "taste_profile": {
+    "salt": 0.0,
+    "sugar": 0.0,
+    "acid": 0.0,
+    "glutamate": 0.0,
+    "capsaicin": 0.0,
+    "lipid": 0.0
+  },
+  "timeline": []
+}

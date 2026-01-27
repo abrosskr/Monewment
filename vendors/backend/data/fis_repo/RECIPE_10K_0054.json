@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "vsn": "1.0.0",
+    "recipe_id": "RECIPE_10K_0054",
+    "author": "AutoPipeline",
+    "target_device_profile": "Universal_v1"
+  },
+  "ingredients": {
+    "미니새송이버섯                                                                                                            1팩 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "버터                                                                                                            20g ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "굴소스                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "진간장                                                                                                            0.5T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "통깨                                                                                                            약간 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    }
+  },
+  "taste_profile": {
+    "salt": 0.0,
+    "sugar": 0.0,
+    "acid": 0.0,
+    "glutamate": 0.0,
+    "capsaicin": 0.0,
+    "lipid": 0.0
+  },
+  "timeline": []
+}

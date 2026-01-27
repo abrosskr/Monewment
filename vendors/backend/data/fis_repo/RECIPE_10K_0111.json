@@ -1,0 +1,89 @@
+{
+  "metadata": {
+    "vsn": "1.0.0",
+    "recipe_id": "RECIPE_10K_0111",
+    "author": "AutoPipeline",
+    "target_device_profile": "Universal_v1"
+  },
+  "ingredients": {
+    "도토리묵                                                                                                            1/2모 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "조미김                                                                                                            1봉 ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "진간장                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "설탕                                                                                                            0.5T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "참기름                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "통깨                                                                                                             ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "다진대파                                                                                                            1T ": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "도마": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "비닐팩": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    },
+    "볼": {
+      "state": "Solid",
+      "viscosity_cp": null,
+      "specific_heat": null,
+      "ph_level": null,
+      "salinity_ppt": null
+    }
+  },
+  "taste_profile": {
+    "salt": 0.0,
+    "sugar": 0.0,
+    "acid": 0.0,
+    "glutamate": 0.0,
+    "capsaicin": 0.0,
+    "lipid": 0.0
+  },
+  "timeline": []
+}

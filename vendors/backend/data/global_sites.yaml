@@ -1,0 +1,195 @@
+# ===============================
+# Tier 1 – 안정적 / 대형 / 오픈
+# ===============================
+
+- name: 10000recipe
+  country: KR
+  site_key: 10000recipe
+  base_url: https://www.10000recipe.com
+  search_url: https://www.10000recipe.com/recipe/list.html?q={query}&page={page}
+  parser: 10000recipe
+  max_pages: 5
+  enabled: true
+
+- name: allrecipes
+  country: US
+  site_key: allrecipes
+  base_url: https://www.allrecipes.com
+  search_url: https://www.allrecipes.com/search?q={query}&page={page}
+  parser: allrecipes
+  max_pages: 3
+  enabled: true
+
+- name: simplyrecipes
+  country: US
+  site_key: simplyrecipes
+  base_url: https://www.simplyrecipes.com
+  search_url: https://www.simplyrecipes.com/search?q={query}&page={page}
+  parser: simplyrecipes
+  max_pages: 3
+  enabled: true
+
+- name: bbc_goodfood
+  country: UK
+  site_key: bbcgoodfood
+  base_url: https://www.bbcgoodfood.com
+  search_url: https://www.bbcgoodfood.com/search/recipes?q={query}&page={page}
+  parser: bbc
+  max_pages: 3
+  enabled: true
+
+- name: serious_eats
+  country: US
+  site_key: seriouseats
+  base_url: https://www.seriouseats.com
+  search_url: https://www.seriouseats.com/search?q={query}
+  parser: seriouseats
+  max_pages: 2
+  enabled: true
+
+- name: tasteofhome
+  country: US
+  site_key: tasteofhome
+  base_url: https://www.tasteofhome.com
+  search_url: https://www.tasteofhome.com/search/?q={query}
+  parser: tasteofhome
+  max_pages: 2
+  enabled: true
+
+# ===============================
+# Tier 2 – 국가별 대표
+# ===============================
+
+- name: marmiton
+  country: FR
+  site_key: marmiton
+  base_url: https://www.marmiton.org
+  search_url: https://www.marmiton.org/recettes/recherche.aspx?aqt={query}&page={page}
+  parser: marmiton
+  max_pages: 2
+  enabled: true
+
+- name: cuisineaz
+  country: FR
+  site_key: cuisineaz
+  base_url: https://www.cuisineaz.com
+  search_url: https://www.cuisineaz.com/recettes/recherche_v2.aspx?recherche={query}&page={page}
+  parser: cuisineaz
+  max_pages: 2
+  enabled: true
+
+- name: essen_und_trinken
+  country: DE
+  site_key: essen_und_trinken
+  base_url: https://www.essen-und-trinken.de
+  search_url: https://www.essen-und-trinken.de/suche?q={query}
+  parser: essen
+  max_pages: 2
+  enabled: true
+
+- name: chefkoch
+  country: DE
+  site_key: chefkoch
+  base_url: https://www.chefkoch.de
+  search_url: https://www.chefkoch.de/rs/s0/{query}/Rezepte.html
+  parser: chefkoch
+  max_pages: 2
+  enabled: true
+
+- name: lacucinaitaliana
+  country: IT
+  site_key: lacucinaitaliana
+  base_url: https://www.lacucinaitaliana.com
+  search_url: https://www.lacucinaitaliana.com/search?q={query}
+  parser: lacucina
+  max_pages: 2
+  enabled: true
+
+- name: giallozafferano
+  country: IT
+  site_key: giallozafferano
+  base_url: https://www.giallozafferano.com
+  search_url: https://www.giallozafferano.it/ricerca-ricette/{query}
+  parser: giallo
+  max_pages: 2
+  enabled: true
+
+- name: cookpad
+  country: JP
+  site_key: cookpad_jp
+  base_url: https://cookpad.com
+  search_url: https://cookpad.com/jp/search/{query}?page={page}
+  parser: cookpad
+  max_pages: 2
+  enabled: true
+
+- name: ajinomoto
+  country: JP
+  site_key: ajinomoto
+  base_url: https://www.ajinomoto.co.jp
+  search_url: https://www.ajinomoto.co.jp/recipe/search/?word={query}
+  parser: ajinomoto
+  max_pages: 2
+  enabled: true
+
+- name: chineserecipes
+  country: CN
+  site_key: sichuan
+  base_url: https://www.chinasichuanfood.com
+  search_url: https://www.chinasichuanfood.com/?s={query}
+  parser: sichuan
+  max_pages: 2
+  enabled: true
+
+# ===============================
+# Tier 3 – 고성능 오픈 푸드 DB
+# ===============================
+
+- name: spoonacular
+  country: GLOBAL
+  site_key: spoonacular
+  base_url: https://spoonacular.com
+  search_url: https://spoonacular.com/recipes/{query}
+  parser: spoonacular
+  max_pages: 1
+  enabled: false # API Required usually, but placeholder
+
+- name: openrecipes
+  country: GLOBAL
+  site_key: openrecipes
+  base_url: https://openrecipes.s3.amazonaws.com
+  search_url: https://openrecipes.s3.amazonaws.com
+  parser: openrecipes
+  max_pages: 1
+  enabled: false
+
+- name: edamam
+  country: GLOBAL
+  site_key: edamam
+  base_url: https://www.edamam.com
+  search_url: https://www.edamam.com/results/recipes/?q={query}
+  parser: edamam
+  max_pages: 1
+  enabled: false
+
+# ===============================
+# Tier 4 – 남미 & 기타
+# ===============================
+
+- name: tudogostoso
+  country: BR
+  site_key: tudogostoso
+  base_url: https://www.tudogostoso.com.br
+  search_url: https://www.tudogostoso.com.br/busca?q={query}
+  parser: tudogostoso
+  max_pages: 2
+  enabled: true
+
+- name: recetastipicas
+  country: ES
+  site_key: recetastipicas
+  base_url: https://www.recetastipicas.com
+  search_url: https://www.recetastipicas.com/?s={query}
+  parser: recetastipicas
+  max_pages: 2
+  enabled: true

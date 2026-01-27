@@ -1,0 +1,38 @@
+{
+    "allrecipes": {
+        "title": "h1.headline",
+        "ingredients": ".mntl-structured-ingredients__list-item",
+        "steps": ".recipe__steps-content li",
+        "image": ".primary-image__image"
+    },
+    "marmiton": {
+        "title": ".main-title",
+        "ingredients": ".recipe-ingredients-item",
+        "steps": ".recipe-step-list__item",
+        "image": ".recipe-media-viewer-thumbnail img"
+    },
+    "bbcgoodfood": {
+        "title": "h1",
+        "ingredients": ".recipe__ingredients li",
+        "steps": ".recipe__method-steps li",
+        "image": ".post-header__image img"
+    },
+    "cookpad_jp": {
+        "title": ".recipe-title",
+        "ingredients": ".ingredient",
+        "steps": ".step_text",
+        "image": "#main-photo img"
+    },
+    "delish": {
+        "title": ".re-title",
+        "ingredients": ".ingredient-item",
+        "steps": ".recipe-step-list li",
+        "image": ".re-image img"
+    },
+    "10000recipe": {
+        "title": ".view2_summary h3",
+        "ingredients": ".ready_ingre3 ul li",
+        "steps": ".view_step_cont",
+        "image": "#main_thumbs"
+    }
+}

@@ -1,0 +1,37 @@
+{
+  "수경재배": {
+    "count": 6,
+    "predicted": "details",
+    "status": "PENDING"
+  },
+  "노지": {
+    "count": 6,
+    "predicted": "details",
+    "status": "PENDING"
+  },
+  "유정란": {
+    "count": 6,
+    "predicted": "details",
+    "status": "PENDING"
+  },
+  "무항생제": {
+    "count": 6,
+    "predicted": "details",
+    "status": "PENDING"
+  },
+  "포항": {
+    "count": 6,
+    "predicted": "unknown",
+    "status": "PENDING"
+  },
+  "오가닉": {
+    "count": 6,
+    "predicted": "details",
+    "status": "PENDING"
+  },
+  "무농약재배": {
+    "count": 6,
+    "predicted": "details",
+    "status": "PENDING"
+  }
+}
