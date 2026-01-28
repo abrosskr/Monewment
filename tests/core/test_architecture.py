@@ -1,47 +1,92 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from src.ant_client.core.updater import Updater
+from src.ant_client.core.updater import AntUpdater as Updater
 from src.core.worker import render_job
 from datetime import datetime
 
 # --- OTA Updater Tests ---
-@patch("src.ant_client.core.updater.requests.get")
-@patch("src.ant_client.core.updater.subprocess.run")
-@patch("src.ant_client.core.updater.os.execv")
-def test_updater_update_flow(mock_execv, mock_run, mock_get):
+@pytest.mark.asyncio
+async def test_updater_update_flow():
     # Setup
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.json.return_value = {
-        "version": "1.1.0",
-        "download_url": "http://example.com"
-    }
-    mock_run.return_value.returncode = 0
-    mock_run.return_value.stdout = "Updated successfully"
-    
-    updater = Updater("http://test-server", "1.0.0")
-    
-    # Execution
-    # Note: Updater calls sys.executable which might be None in some mock envs, catch if needed
-    updater.check_and_update()
-    
-    # Verify
-    mock_get.assert_called_once()
-    mock_run.assert_called_with(["git", "pull"], capture_output=True, text=True)
-    # execv should be called to restart
-    mock_execv.assert_called()
-
-def test_updater_no_update_needed():
-    with patch("src.ant_client.core.updater.requests.get") as mock_get:
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "version": "1.0.0" # Same version
+    with patch("src.ant_client.core.updater.aiohttp.ClientSession") as mock_session:
+        mock_get = AsyncMock()
+        # Mock response context manager
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json.return_value = {
+            "version": "1.1.0",
+            "download_url": "http://example.com/update.exe",
+            "hash": "deadbeef"
         }
+        mock_get_cm = AsyncMock() # The context manager returned by .get()
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json.return_value = {
+            "version": "1.1.0",
+            "download_url": "http://example.com/update.exe",
+            "hash": "deadbeef"
+        }
+        mock_get_cm.__aenter__.return_value = mock_resp
         
-        updater = Updater("http://test-server", "1.0.0")
-        result = updater.check_and_update()
+        # session.get() is not async, it returns a CM. So use MagicMock.
+        mock_session_instance = MagicMock()
+        mock_session_instance.get.return_value = mock_get_cm
         
-        assert result is False
+        # ClientSession() constructor returns a CM.
+        mock_session.return_value.__aenter__.return_value = mock_session_instance
+        
+        updater = Updater("1.0.0", "http://test-server")
+        
+        # Execution
+        result = await updater.check_for_updates()
+        
+        # Verify
+        assert result is not None
+        assert result["version"] == "1.1.0"
+        
+        # Test perform_update (partial mock)
+        with patch.object(updater, '_download_file', return_value=True) as mock_dl, \
+             patch.object(updater, '_verify_hash', return_value=True) as mock_verify, \
+             patch("src.ant_client.core.updater.subprocess.Popen") as mock_popen, \
+             patch("src.ant_client.core.updater.sys.exit") as mock_exit:
+                 
+            # Fix: mock exe_path so it proceeds
+            updater.exe_path = "test_app.exe"
+            
+            # Create a dummy file to simulate exe existence for rename
+            with patch("os.rename"), patch("os.remove"), patch("os.path.exists", return_value=True):
+                 await updater.perform_update(result)
+                 
+            mock_dl.assert_called_once()
+            mock_verify.assert_called_once()
+            mock_popen.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_updater_no_update_needed():
+    with patch("src.ant_client.core.updater.aiohttp.ClientSession") as mock_session:
+        mock_get = AsyncMock()
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json.return_value = {
+            "version": "1.0.0" 
+        }
+        mock_get_cm = AsyncMock()
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json.return_value = {
+            "version": "1.0.0" 
+        }
+        mock_get_cm.__aenter__.return_value = mock_resp
+        
+        mock_session_instance = MagicMock()
+        mock_session_instance.get.return_value = mock_get_cm
+        mock_session.return_value.__aenter__.return_value = mock_session_instance
+        
+        updater = Updater("1.0.0", "http://test-server")
+        result = await updater.check_for_updates()
+        
+        assert result is None
 
 # --- Task Queue Tests ---
 @pytest.mark.asyncio

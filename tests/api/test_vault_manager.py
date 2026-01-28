@@ -31,8 +31,17 @@ async def override_get_db():
 app.dependency_overrides[get_api_key_user] = override_get_api_key_user
 app.dependency_overrides[get_db] = override_get_db
 
+@patch("src.main.engine")
 @patch("src.core.redis_client.RedisManager.get_instance")
-def test_init_upload(mock_redis_manager):
+@patch("src.core.cluster_manager.ClusterManager.get_instance")
+def test_init_upload(mock_cluster_manager, mock_redis_manager, mock_engine):
+    # Mock Cluster Manager
+    mock_cluster_manager.return_value.initialize = AsyncMock()
+
+    # Mock Engine for Lifespan
+    mock_connection = AsyncMock()
+    mock_engine.begin.return_value.__aenter__.return_value = mock_connection
+    
     # Configure Startup Mock
     mock_instance = mock_redis_manager.return_value
     mock_instance.connect = AsyncMock()
@@ -63,8 +72,17 @@ def test_init_upload(mock_redis_manager):
         assert data["assignments"][0]["target_ants"][0] in ["ant1", "ant2"]
         print("\n✅ Init Upload Test Passed")
 
+@patch("src.main.engine")
 @patch("src.core.redis_client.RedisManager.get_instance")
-def test_complete_upload(mock_redis_manager):
+@patch("src.core.cluster_manager.ClusterManager.get_instance")
+def test_complete_upload(mock_cluster_manager, mock_redis_manager, mock_engine):
+    # Mock Cluster Manager
+    mock_cluster_manager.return_value.initialize = AsyncMock()
+
+    # Mock Engine for Lifespan
+    mock_connection = AsyncMock()
+    mock_engine.begin.return_value.__aenter__.return_value = mock_connection
+
     # Configure Startup Mock
     mock_instance = mock_redis_manager.return_value
     mock_instance.connect = AsyncMock()

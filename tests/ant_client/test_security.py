@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from src.ant_client.core.security import AntSecurity
+from src.core.ant_security import AntSecurity
 
 def test_ant_security_encryption_decryption():
     # 1. Setup
