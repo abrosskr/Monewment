@@ -1,4 +1,5 @@
 from reedsolo import RSCodec, ReedSolomonError
+from typing import List
 
 class ErasureCoding:
     def __init__(self, n: int = 10, m: int = 4):

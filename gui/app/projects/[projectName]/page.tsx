@@ -15,17 +15,18 @@ export default function ProjectDetailPage() {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // [최적화 추가] AI 분석 문서 데이터 로드
-    const fetchDoc = async () => {
+    // [최적화 추가] AI 분석 문서 데이터 로드
+    const fetchDoc = React.useCallback(async () => {
         try {
             const res = await fetch('http://localhost:8001/api/docs/structure');
             const data = await res.json();
             setDocContent(data.content);
         } catch (err) {
-            console.error("문서 로드 실패");
+            console.error("문서 로드 실패", err);
         }
-    };
+    }, []);
 
-    const fetchLogs = async () => {
+    const fetchLogs = React.useCallback(async () => {
         try {
             const res = await fetch(`http://localhost:8001/projects/${projectName}/logs`);
             const data = await res.json();
@@ -33,7 +34,7 @@ export default function ProjectDetailPage() {
         } catch (err) {
             setLogs("로그를 가져오는 데 실패했습니다.");
         }
-    };
+    }, [projectName]);
 
     const handleControl = async (action: 'start' | 'stop') => {
         try {
@@ -55,7 +56,7 @@ export default function ProjectDetailPage() {
         fetchDoc(); // [추가] 페이지 로드 시 문서 호출
         const interval = setInterval(fetchLogs, 3000);
         return () => clearInterval(interval);
-    }, [projectName]);
+    }, [fetchLogs, fetchDoc, projectName]);
 
     return (
         <div className="min-h-screen bg-[#0f172a] text-slate-200 p-8 font-mono">

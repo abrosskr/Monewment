@@ -11,14 +11,16 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
     const [isClientMode, setIsClientMode] = useState(false);
 
     useEffect(() => {
-        if (searchParams.get("context") === "client") {
+        const contextParam = searchParams.get("context");
+        const storedContext = sessionStorage.getItem("monewment_ui_context");
+
+        if (contextParam === "client" && !isClientMode) {
             setIsClientMode(true);
-            // Also store in session storage to persist across navigation in the same tab
             sessionStorage.setItem("monewment_ui_context", "client");
-        } else if (sessionStorage.getItem("monewment_ui_context") === "client") {
+        } else if (storedContext === "client" && !isClientMode) {
             setIsClientMode(true);
         }
-    }, [searchParams]);
+    }, [searchParams, isClientMode]);
 
     return (
         <LayoutContext.Provider value={{ isClientMode }}>
