@@ -503,5 +503,32 @@ Next Target: **Phase 7 (Internationalization - i18n / Localization)**
 
 ---
 **[Current Objective]**
-Next Target: **Phase 7 (Timeline UI & Rollback Logic Implementation)** - 사용자 중심의 버전 관리 UI 및 실제 복원 로직 완성.
+Next Target: **Phase 17 (Ant Compute - Lessor PC Resource Sharing Planning)** - 임대인 PC 자원 공유를 위한 탈중앙화 컴퓨팅 아키텍처 및 보안 거버넌스 수립.
+
+## 17. Phase 17: Ant Compute (Lessor PC Resource Sharing Planning)
+> **Execution Period:** 2026-01-29  
+> **Status:** 🏗️ Planning & Deep Analysis Completed
+
+임대인(Lessor)의 물리적 PC 자원을 임차인(Lessee)에게 안전하고 효율적으로 공유하기 위한 고도화된 기획을 완료했습니다.
+
+### A. 하이브리드 P2P 아키텍처 (Hybrid P2P Architecture)
+*   **Signaling (Queen)**: WebSocket을 통한 세션 조율 및 과금 이벤트 처리.
+*   **Data Plane (Ant-to-Lessee)**: WebRTC/UDP 기반의 초저지연 데이터 전송 파이프라인.
+    *   **Pixel Streaming**: 화면/경험 실시간 전송.
+    *   **Service Tunneling**: 로컬 API(예: Ollama) 및 포트 공유.
+
+### B. 리소스 모델링 및 거버넌스
+*   **ResourceOffer**: CPU, RAM, GPU 사양 및 허용 기능(`DOCKER`, `RENDER`, `INFERENCE`) 정의.
+*   **Tiered Isolation (보안 계층)**:
+    *   **Level 1 (Trusted)**: 직접 프로세스 제어.
+    *   **Level 2 (Sandboxed)**: Docker 컨테이너 기반 격리 (권장).
+    *   **Level 3 (App Only)**: 특정 창 스트리밍만 허용.
+
+### C. 과금 및 통제 시스템 통합
+*   **ComputeSession**: P2P 세션 시간 및 자원 소모량 실시간 미터링.
+*   **Kill Switch**: 임대인의 물리적 통제권(트레이 아이콘 종료) 보장.
+
+---
+**[Next Step]**
+- **Implementation**: `src/models/compute.py` 정의 및 Ant Client의 컴퓨팅 엔진 모듈화 구현 시작.
 
