@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Enum, JSON, Numeric
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Enum, JSON, Numeric, Text
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
 import enum
@@ -452,3 +452,56 @@ class BuildLog(Base):
     completed_at = Column(DateTime(timezone=True), nullable=True)
     
     deployment = relationship("DeploymentConfig", back_populates="build_logs")
+
+# --- Phase 6: Version Control System (VCS) ---
+
+class ProjectCommit(Base):
+    """
+    [VCS] 프로젝트 상태 스냅샷 (Commit) - Immutable History
+    """
+    __tablename__ = "project_commits"
+    id = Column(Integer, primary_key=True, index=True)
+    
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    
+    # Commit Identity
+    commit_hash = Column(String, unique=True, index=True, nullable=False) # SHA-256
+    parent_hash = Column(String, ForeignKey("project_commits.commit_hash"), nullable=True)
+    
+    message = Column(String, nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    project = relationship("Project", backref="commits")
+    author = relationship("User")
+    files = relationship("CommitFile", back_populates="commit")
+    
+    # Parent/Child traversal (History Chain)
+    parent = relationship("ProjectCommit", remote_side=[commit_hash], backref="children")
+
+class FileBlob(Base):
+    """
+    [VCS] 파일 내용 저장소 (Deduplicated Storage)
+    """
+    __tablename__ = "file_blobs"
+    blob_hash = Column(String, primary_key=True, index=True) # SHA-256 is the ID
+    
+    content = Column(Text, nullable=True) # Source Code Text
+    size_bytes = Column(Integer, default=0)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class CommitFile(Base):
+    """
+    [VCS] 커밋-파일 매핑 (Tree Structure)
+    """
+    __tablename__ = "commit_files"
+    id = Column(Integer, primary_key=True, index=True)
+    
+    commit_hash = Column(String, ForeignKey("project_commits.commit_hash"), nullable=False)
+    blob_hash = Column(String, ForeignKey("file_blobs.blob_hash"), nullable=False)
+    file_path = Column(String, nullable=False)
+    
+    commit = relationship("ProjectCommit", back_populates="files")
+    blob = relationship("FileBlob")

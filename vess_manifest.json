@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-01-28T12:32:53.702841",
+    "generated_at": "2026-01-28T12:53:59.563054",
     "generated_by": "VESS_LOCKER",
     "policy": "STRICT"
   },
@@ -9,6 +9,7 @@
   "critical_dependencies": {
     "aiohttp": "3.9.3",
     "aiosignal": "1.4.0",
+    "aiosqlite": "0.22.1",
     "annotated-types": "0.7.0",
     "anyio": "4.12.1",
     "arq": "0.26.0",

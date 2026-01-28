@@ -11,15 +11,20 @@ if SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # 2. Async Engine Creation
-engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL,
-    echo=False, # Set to True for debugging SQL queries
-    future=True,
-    pool_pre_ping=True,
-    pool_size=20,          # [Optimized] Keep 20 connections open
-    max_overflow=10,       # [Optimized] Allow 10 more during spikes
-    pool_recycle=3600,     # [Optimized] Recycle connections every hour
-)
+engine_kwargs = {
+    "echo": False,
+    "future": True,
+}
+
+if not SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_size": 20,
+        "max_overflow": 10,
+        "pool_recycle": 3600,
+    })
+
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, **engine_kwargs)
 
 # 3. Async Session Factory
 AsyncSessionLocal = sessionmaker(

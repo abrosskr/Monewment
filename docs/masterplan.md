@@ -469,3 +469,39 @@ Next Target: **Phase 7 (Internationalization - i18n / Localization)**
 - API_LIST.md 자동 생성 스크립트 구현.
 - generate_docs_v5.py 업데이트 및 전체 문서 자동 생성 검증 완료.
 
+---
+
+## 16. Control Plane Establishment: Zero-Drift & Version Control Authority
+> **Execution Period:** 2026-01-28  
+> **Status:** ✅ Foundation Established and Verified (Phase 0 - Phase 6)
+
+시스템의 구조적 붕괴(Python 3.14 실험적 버전 충돌)를 복구하고, 강력한 환경 통제권(Authority) 확보를 위한 **Control Plane** 패러다임을 도입했습니다.
+
+### A. Environment Authority: VESS (Virtual Environment Stability System)
+*   **The Law (`vess_manifest.json`)**: Python 3.11.9 및 80여 개의 핵심 패키지 버전을 "불변의 법"으로 정의.
+*   **The Controller (`vess.ps1`)**: 관리 효율을 극대화한 PowerShell CLI 구현.
+    *   `check`: 현재 환경이 법(Manifest)을 준수하는지 0.5초 이내 검증.
+    *   `lock`: 현재의 안정된 상태를 법으로 상정하여 새로운 하드 베이스라인 선포.
+    *   `heal`: (준비 중) 어긋난 의존성을 법전대로 자동 복구.
+*   **Identity Shift**: 시스템 보조 도구(Helper)에서 환경 통치 권위(Authority)로 AI 역량 격상.
+
+### B. System Integrity Plane (SIP)
+*   **Deterministic Health Reporting**: Vercel 및 분산 환경의 미들웨어 간섭을 우회하여 시스템 무결성 상태를 JSON으로 보고하는 `/__integrity` 엔드포인트 구현.
+*   **CI/CD Hygiene**: `.venv` 폴더 등 대용량 불필요 파일이 Git 인덱싱을 방해하지 않도록 `.gitignore` 및 Surgical Git 프로세스 확립.
+
+### C. Version Control Authority (VCS - Phase 6)
+*   **Immutable Snapshot Model**: Git과 유사한 머클 트리 구조의 데이터 모델 도입.
+    *   `ProjectCommit`: SHA-256 기반 불변 히스토리 체인.
+    *   `FileBlob`: 파일 내용 중복 제거(Deduplication)를 통한 저장 공간 최적화.
+    *   `CommitFile`: 커밋 시점의 프로젝트 트리 매핑.
+*   **VCS Service Logic**: 트랜잭션 기반 커밋 프로세스 구현 (`src/services/vcs_service.py`).
+*   **Infrastructure Pivot**: 외부 인프라(Docker/Postgres) 장애 시에도 시스템 가동을 유지하기 위해 SQLite(`aiosqlite`) 기반의 **Local-First 무중단 가동 전략** 채택 및 검증 성공.
+
+### D. Verification Summary
+*   **Backend Test Suite**: 21개 전체 테스트 케이스 통과 (Mocking 및 비동기 드라이버 최적화).
+*   **Functional Flow Test**: Genesis 커밋부터 히스토리 추적, 내용 복원까지의 Full-Cycle 검증 완료 (`scripts/test_vcs_flow.py`).
+
+---
+**[Current Objective]**
+Next Target: **Phase 7 (Timeline UI & Rollback Logic Implementation)** - 사용자 중심의 버전 관리 UI 및 실제 복원 로직 완성.
+

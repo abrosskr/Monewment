@@ -25,7 +25,7 @@ from src.core.background import background_task_saver
 from src.core.limiter import limiter
 
 # Routers
-from src.routers import tools, ui_factory
+from src.routers import tools, ui_factory, vcs
 from src.api.v1.endpoints import auth, projects, services, chat, ant_socket, deploy, vm, billing, email_service
 from src.api.v1.admin import dashboard, monitoring
 from src.api.v1.sync import router as sync_router
@@ -123,6 +123,7 @@ app.include_router(ant_socket.router, prefix="/ws/ant", tags=["Ant WebSocket"])
 # [라우터 - Modules]
 app.include_router(tools.router, prefix=settings.API_V1_STR)
 app.include_router(ui_factory.router, prefix=f"{settings.API_V1_STR}/ui-factory", tags=["UI Factory"])
+app.include_router(vcs.router, prefix=f"{settings.API_V1_STR}/vcs", tags=["VCS (Version Control Authority)"])
 app.include_router(deploy.router, prefix=f"{settings.API_V1_STR}/deploy", tags=["Autonomous Deploy"])
 app.include_router(vm.router, prefix="/api/vm", tags=["Virtual Machines"])
 app.include_router(billing.router, prefix="/api/v1/billing", tags=["Billing & Payment"])

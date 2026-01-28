@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
     POSTGRES_PORT: int = 5432
+    DATABASE_URL: Optional[str] = None
 
     REDIS_URL: str = "redis://localhost:6379/0"
 
