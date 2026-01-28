@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Enum, JSON, Numeric, Text
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship, declarative_base, backref
 from sqlalchemy.sql import func
 import enum
 
@@ -468,6 +468,9 @@ class ProjectCommit(Base):
     commit_hash = Column(String, unique=True, index=True, nullable=False) # SHA-256
     parent_hash = Column(String, ForeignKey("project_commits.commit_hash"), nullable=True)
     
+    # Merkle Root of file tree state
+    content_hash = Column(String, nullable=False)
+    
     message = Column(String, nullable=False)
     author_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -479,6 +482,23 @@ class ProjectCommit(Base):
     
     # Parent/Child traversal (History Chain)
     parent = relationship("ProjectCommit", remote_side=[commit_hash], backref="children")
+
+class ProjectHead(Base):
+    """
+    [VCS] Project HEAD Authority (Mutable pointer to Immutable state)
+    Uses version_id for Optimistic Locking.
+    """
+    __tablename__ = "project_vcs_heads"
+    project_id = Column(Integer, ForeignKey("projects.id"), primary_key=True)
+    commit_hash = Column(String, ForeignKey("project_commits.commit_hash"), nullable=False)
+    
+    # Optimistic Locking
+    version_id = Column(Integer, default=1, nullable=False)
+    
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    project = relationship("Project", backref=backref("vcs_head", uselist=False))
+    commit = relationship("ProjectCommit")
 
 class FileBlob(Base):
     """
@@ -505,3 +525,38 @@ class CommitFile(Base):
     
     commit = relationship("ProjectCommit", back_populates="files")
     blob = relationship("FileBlob")
+
+class VCSRollbackEvent(Base):
+    """
+    [VCS Audit] Traceability for Restoration / Rollback actions.
+    """
+    __tablename__ = "vcs_rollback_events"
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    executor_id = Column(Integer, ForeignKey("users.id"))
+    
+    target_commit_hash = Column(String, nullable=False)
+    status = Column(String, default="STAGING") # STAGING, VALIDATED, COMMITTED, FAILED
+    error_log = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+class VCSAuditLog(Base):
+    """
+    [VCS Audit] Append-only system audit log (Separate from business data).
+    """
+    __tablename__ = "vcs_audit_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    level = Column(String, default="INFO") # INFO, WARN, CRITICAL
+    action = Column(String, nullable=False) # COMMIT, ROLLBACK, GC, INTEGRITY_CHECK
+    actor_id = Column(Integer, ForeignKey("users.id"))
+    
+    resource_type = Column(String) # PROJECT, COMMIT, BLOB
+    resource_id = Column(String)
+    
+    message = Column(Text)
+    details = Column(JSON, nullable=True) # Merkle root delta, failure stack, etc.
+    
+    ip_address = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import List, Dict
 from src.dependencies import get_db
 from src.services.vcs_service import vcs_service
-from src.models import User
-from src.core.security import get_current_user # Assuming this exists based on common pattern
+from src.models import User, Project
+from src.core.security import validate_project_path, get_current_user
 
 router = APIRouter()
 
@@ -14,10 +15,9 @@ async def create_commit(
     message: str,
     files: List[Dict[str, str]],
     db: AsyncSession = Depends(get_db),
-    # current_user: User = Depends(get_current_user) # Disabled security for now for easier testing, but can be enabled later
+    # current_user: User = Depends(get_current_user)
 ):
     """Create a new commit snapshot for a project."""
-    # Dummy user_id if security is disabled
     user_id = 1 
     
     try:
@@ -29,6 +29,40 @@ async def create_commit(
             files=files
         )
         return {"status": "success", "commit_hash": commit_hash}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/rollback", response_model=Dict)
+async def rollback(
+    project_id: int = Body(...),
+    target_hash: str = Body(...),
+    db: AsyncSession = Depends(get_db),
+    # current_user: User = Depends(get_current_user)
+):
+    """Roll back a project to a specific commit state."""
+    user_id = 1
+    
+    # 1. Resolve Project Path
+    stmt = select(Project).where(Project.id == project_id)
+    result = await db.execute(stmt)
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    try:
+        # 2. Securely validate and get physical path
+        project_root = validate_project_path(project.name)
+        
+        # 3. Execute Atomic Restore
+        await vcs_service.rollback(
+            db=db,
+            project_id=project_id,
+            executor_id=user_id,
+            target_hash=target_hash,
+            project_root_path=project_root
+        )
+        return {"status": "success", "message": f"Project restored to {target_hash}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
