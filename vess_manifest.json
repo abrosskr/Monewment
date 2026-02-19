@@ -1,0 +1,69 @@
+{
+  "project_name": "Monewment V3 & FOT",
+  "target_os": "Ubuntu 24.04 LTS",
+  "migration_strategy": "Zero-Entropy Clone",
+  "runtime": {
+    "python_version": "3.12.0",
+    "command": "python3"
+  },
+  "dependencies": {
+    "core": [
+      "fastapi==0.111.0",
+      "uvicorn==0.30.1",
+      "pydantic-settings==2.3.4",
+      "sqlalchemy==2.0.46",
+      "asyncpg==0.31.0",
+      "greenlet==3.3.1"
+    ],
+    "fot_physics": [
+      "numpy>=1.26.0",
+      "pandas>=2.1.0"
+    ]
+  },
+  "database": {
+    "engine": "PostgreSQL 15+",
+    "schemas": {
+      "queen_vendors": {
+        "role": "role_vendors",
+        "tables": ["members", "migration_history"]
+      },
+      "queen_client_b": {
+        "role": "role_client_b",
+        "tables": ["members", "migration_history"]
+      }
+    },
+    "table_structure": {
+      "members": {
+        "columns": ["id (UUID)", "username (VARCHAR)", "email (VARCHAR)", "phone_number (VARCHAR)", "created_at (TIMESTAMP)"]
+      }
+    }
+  },
+  "fot_metadata": {
+    "status": "MISSING_IN_SOURCE",
+    "required_files": [
+      "ingredients_physics.json",
+      "ontology_map.json"
+    ],
+    "action_required": "Please copy these files from the legacy FOT server to `src/core/fot/`."
+  },
+  "environment_variables": {
+    "PROJECT_NAME": "Monewment",
+    "ENVIRONMENT": "development",
+    "HOST": "0.0.0.0",
+    "PORT": "8000",
+    "LOG_LEVEL": "INFO",
+    "ACCESS_TOKEN_EXPIRE_MINUTES": "1440",
+    "ALLOWED_ORIGINS": "*",
+    "DATABASE_URL": "postgresql+asyncpg://[USER]:[PASSWORD]@[HOST]:[PORT]/[DB]",
+    "PORT_CORE_API": "8800",
+    "PORT_TWIN_ENGINE": "8100",
+    "PORT_ANT_ADAPTOR": "8200",
+    "PORT_ADMIN_DASHBOARD": "8300",
+    "DB_POOL_SIZE": "20",
+    "DB_MAX_OVERFLOW": "10",
+    "DOCKER_HOST_URL": "unix://var/run/docker.sock",
+    "SANDBOX_TIMEOUT_SEC": "30",
+    "SANDBOX_MAX_MEMORY_MB": "256",
+    "API_GATEWAY_URL": "http://127.0.0.1:8000"
+  }
+}
