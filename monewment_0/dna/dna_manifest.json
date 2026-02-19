@@ -1,0 +1,18 @@
+{
+    "master_version": "0.1.0-genesis",
+    "instances": {
+        "1": {
+            "alias": "BORN_FIELD",
+            "role": "OMNI_CRAWLER",
+            "port": 8200,
+            "isolation": {
+                "venv": "venv_monewment_1",
+                "storage": "modules/omni_crawler/data/buffer/"
+            },
+            "environment": {
+                "ENGINE": "BORN_FIELD_V1",
+                "LOG_LEVEL": "DEBUG"
+            }
+        }
+    }
+}

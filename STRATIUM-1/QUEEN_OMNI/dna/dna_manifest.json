@@ -1,0 +1,70 @@
+{
+    "genesis_protocol": "3.0.0",
+    "master": "EDENVALE",
+    "naming_protocol": {
+        "MONEWMENT_0": "EDENVALE",
+        "MONEWMENT_1": {
+            "default": "STRATIUM",
+            "type": "HUB"
+        },
+        "QUEEN": {
+            "prefix": "QUEEN",
+            "auto_increment": true,
+            "type": "DOMAIN"
+        },
+        "ANT": {
+            "format": "{USER}_{DEVICE}_{MODEL}",
+            "type": "WORKER"
+        }
+    },
+    "layers": {
+        "MONEWMENT": {
+            "inheritance_mode": "WHITELIST",
+            "whitelist": [
+                "*"
+            ],
+            "blacklist": []
+        },
+        "QUEEN": {
+            "inheritance_mode": "WHITELIST",
+            "whitelist": [
+                "core/*",
+                "templates/*",
+                "dna/dna_manifest.json",
+                "spawn_head.py"
+            ],
+            "blacklist": [
+                "docs/*",
+                "tests/*"
+            ]
+        },
+        "ANT": {
+            "inheritance_mode": "WHITELIST",
+            "whitelist": [
+                "core/logging.py",
+                "core/libs/crawler_engine.py",
+                "main.py"
+            ],
+            "blacklist": [
+                "core/auth.py",
+                "spawn_head.py",
+                "dna/*",
+                "templates/*"
+            ]
+        }
+    },
+    "spawns": [
+        {
+            "id": "BLOOM_FIELD",
+            "layer": "QUEEN",
+            "template": "omni_crawler",
+            "port": 8200
+        },
+        {
+            "id": "OMNI_QUEEN",
+            "layer": "QUEEN",
+            "template": "omni_crawler",
+            "port": 8201
+        }
+    ]
+}

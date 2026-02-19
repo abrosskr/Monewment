@@ -1,0 +1,8 @@
+{
+    "ID": "CRAWLER_ANT_01",
+    "USER": "GORDON",
+    "DEVICE": "PC",
+    "MODEL": "GEMINI",
+    "PARENT_QUEEN": "OMNI_QUEEN",
+    "GENESIS": "V3.0_WORKER"
+}

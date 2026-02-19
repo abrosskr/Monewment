@@ -1,0 +1,13 @@
+{
+    "ID": "OMNI_QUEEN",
+    "LAYER": "QUEEN",
+    "STRATIUM": "STRATIUM",
+    "GENESIS": "V3.0",
+    "TIMESTAMP": "2026-02-20  1:36:45.10",
+    "CONFIG": {
+        "id": "OMNI_QUEEN",
+        "layer": "QUEEN",
+        "template": "omni_crawler",
+        "port": 8201
+    }
+}
