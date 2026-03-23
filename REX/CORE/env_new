@@ -1,0 +1,12 @@
+# REX SOVEREIGN IDENTITY CONFIGURATION (v1.2)
+CORE_URL=http://127.0.0.1:8800/v1
+GATEWAY_TOKEN=mon_gw_ch4ng3m3_bef0re_pr0d
+
+# [RESTORED] Imperial Registry Identifiers
+REX_ID=ba537759-f607-4eda-841c-eeba65a5147b
+QUEEN_ID=ba537759-f607-4eda-841c-eeba65a5147b
+STRATUM_ID=badd8a15-5e63-4d24-81fd-489e8973cb85
+
+# [AI ENGINE] Gemini Advanced Configuration
+GEMINI_API_KEYS="AIzaSyAFPoU_FpGkM_7C6tn1JwQjXrrDl0GCjiM"
+GEMINI_MODEL_ID=gemini-1.5-flash

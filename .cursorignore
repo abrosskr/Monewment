@@ -1,0 +1,5 @@
+﻿TRASH_BIN/
+data/archive/
+data/physics/
+.venv/
+__pycache__/

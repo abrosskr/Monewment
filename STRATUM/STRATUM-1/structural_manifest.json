@@ -1,0 +1,13 @@
+{
+    "empire_name": "MONEWMENT",
+    "version": "1.0.0",
+    "infrastructure": {
+        "core": "STRATUM-1",
+        "gate": "8800"
+    },
+    "sovereigns": {
+        "BABEL": "8830",
+        "REX": "8810"
+    },
+    "deployment_date": "2026-03-22"
+}

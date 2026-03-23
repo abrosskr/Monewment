@@ -1,0 +1,4 @@
+# EDENVALE Queen Dependencies
+# Add Queen-specific packages here.
+# Core libraries are provided by MONEWMENT (Read-Only), but usually run in this venv.
+# This ensures isolation between Queens.

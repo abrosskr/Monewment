@@ -1,0 +1,38 @@
+name: MONEWMENT Codex Integrity Audit
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Verify L0 DNA Structure (Zero-Entropy Check)
+      run: |
+        # monewment_0/core 폴더가 존재하는지 검사
+        if [ ! -d "monewment_0/core" ]; then
+          echo "ERROR: Master DNA (monewment_0/core) is missing!"
+          exit 1
+        fi
+        
+        # 필수 패키지 초기화 파일 확인
+        ls monewment_0/core/__init__.py
+        ls monewment_0/core/monitor/heartbeat.py
+        
+        echo "Codex Integrity Verified."
+
+    - name: Linting with Flake8
+      run: |
+        pip install flake8
+        # 핵심 로직(src, monewment_0)에 대한 문법 검사
+        flake8 src monewment_0 --count --select=E9,F63,F7,F82 --show-source --statistics

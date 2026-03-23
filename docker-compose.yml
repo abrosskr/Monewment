@@ -1,0 +1,92 @@
+version: '3.8'
+services:
+  queen_internal:
+    build:
+      context: C:\monewment\STRATUM-1\QUEEN_INTERNAL
+      dockerfile: Dockerfile
+    volumes:
+    - C:/monewment/MONEWMENT-0:/monewment/core:ro
+    - C:\monewment\STRATUM-1\QUEEN_INTERNAL/config:/app/config:rw
+    - C:\monewment\STRATUM-1\QUEEN_INTERNAL/logic_boundary:/app/logic_boundary:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+    - QUEEN_ID=INTERNAL
+  queen_ally_retest:
+    build:
+      context: C:\monewment\STRATUM-1\QUEEN_ALLY_RETEST
+      dockerfile: Dockerfile
+    volumes:
+    - C:/monewment/MONEWMENT-0:/monewment/core:ro
+    - C:\monewment\STRATUM-1\QUEEN_ALLY_RETEST/config:/app/config:ro
+    - C:\monewment\STRATUM-1\QUEEN_ALLY_RETEST/logic_boundary:/app/logic_boundary:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+    - QUEEN_ID=ALLY_RETEST
+  queen_crawler:
+    build:
+      context: C:\monewment\STRATUM-1\QUEEN_CRAWLER
+      dockerfile: Dockerfile
+    volumes:
+    - C:/monewment/MONEWMENT-0:/monewment/core:ro
+    - C:\monewment\STRATUM-1\QUEEN_CRAWLER/config:/app/config:rw
+    - C:\monewment\STRATUM-1\QUEEN_CRAWLER/logic_boundary:/app/logic_boundary:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+    - QUEEN_ID=CRAWLER
+  queen_venv_test:
+    build:
+      context: C:\monewment\STRATUM-1\QUEEN_VENV_TEST
+      dockerfile: Dockerfile
+    volumes:
+    - C:/monewment/MONEWMENT-0:/monewment/core:ro
+    - C:\monewment\STRATUM-1\QUEEN_VENV_TEST/config:/app/config:rw
+    - C:\monewment\STRATUM-1\QUEEN_VENV_TEST/logic_boundary:/app/logic_boundary:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+    - QUEEN_ID=VENV_TEST
+  queen_ally_test:
+    build:
+      context: C:\monewment\STRATUM-1\QUEEN_ALLY_TEST
+      dockerfile: Dockerfile
+    volumes:
+    - C:/monewment/MONEWMENT-0:/monewment/core:ro
+    - C:\monewment\STRATUM-1\QUEEN_ALLY_TEST/config:/app/config:ro
+    - C:\monewment\STRATUM-1\QUEEN_ALLY_TEST/logic_boundary:/app/logic_boundary:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+    - QUEEN_ID=ALLY_TEST
+  queen_retest_internal:
+    build:
+      context: C:\monewment\STRATUM-1\QUEEN_RETEST_INTERNAL
+      dockerfile: Dockerfile
+    volumes:
+    - C:/monewment/MONEWMENT-0:/monewment/core:ro
+    - C:\monewment\STRATUM-1\QUEEN_RETEST_INTERNAL/config:/app/config:rw
+    - C:\monewment\STRATUM-1\QUEEN_RETEST_INTERNAL/logic_boundary:/app/logic_boundary:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+    - QUEEN_ID=RETEST_INTERNAL

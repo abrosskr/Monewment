@@ -1,0 +1,10 @@
+# AREUM-0 requirements
+# 제국 헌법 규약: pydantic v2, httpx async, yaml parsing
+
+httpx==0.27.0
+pydantic==2.7.1
+pydantic-settings==2.3.4
+pyyaml==6.0.1
+google-generativeai==0.7.2
+openai==1.35.10
+dotenv==0.21.1
